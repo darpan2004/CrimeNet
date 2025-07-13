@@ -7,6 +7,8 @@ import org.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,8 +30,11 @@ public class UserController {
     @GetMapping("/profile")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<User> getCurrentUserProfile() {
-        // TODO: Get current user from security context
-        return ResponseEntity.ok().build();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        return userService.findByUsername(username)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/profile")
