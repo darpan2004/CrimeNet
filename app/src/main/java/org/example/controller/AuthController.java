@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.example.entity.User;
+import org.example.service.JwtService;
 import org.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,9 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private JwtService jwtService;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -40,13 +44,15 @@ public class AuthController {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // TODO: Generate JWT token
-        String jwt = "dummy-jwt-token";
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String jwt = jwtService.generateToken(user);
 
         Map<String, Object> response = new HashMap<>();
         response.put("token", jwt);
         response.put("type", "Bearer");
-        response.put("user", userService.findByUsername(username).orElse(null));
+        response.put("user", user);
 
         return ResponseEntity.ok(response);
     }
@@ -68,7 +74,18 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<Map<String, Object>> refreshToken() {
-        // TODO: Implement JWT token refresh
-        return ResponseEntity.ok().build();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String jwt = jwtService.generateToken(user);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", jwt);
+        response.put("type", "Bearer");
+
+        return ResponseEntity.ok(response);
     }
 } 

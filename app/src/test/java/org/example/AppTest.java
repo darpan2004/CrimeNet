@@ -9,5 +9,6 @@ class AppTest {
     @Test
     void contextLoads() {
         // This test will pass if the Spring context loads successfully
+        // Temporarily disabled for development
     }
 }
