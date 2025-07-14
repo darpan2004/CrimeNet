@@ -30,7 +30,6 @@ dependencies {
 
     // Databases
     runtimeOnly 'org.postgresql:postgresql'
-    runtimeOnly 'com.h2database:h2'
 
     // Testing (JUnit 5 included)
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

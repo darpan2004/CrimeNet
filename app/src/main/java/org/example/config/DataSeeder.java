@@ -67,6 +67,7 @@ public class DataSeeder implements CommandLineRunner {
         organization.setRole(UserRole.ORGANIZATION);
         organization.setEmailVerified(true);
         organization.setOrganizationVerified(true);
+        organization.setOrganizationType("GOVERNMENT");
         organization.setAvailableForHire(false);
         organization.setHourlyRate(0.0);
         organization.setSolvedCasesCount(0);
@@ -102,6 +103,33 @@ public class DataSeeder implements CommandLineRunner {
         solver.setUpdatedAt(LocalDateTime.now());
         userService.createUser(solver);
 
+        // Create Test User for Postman Testing
+        User testUser = new User();
+        testUser.setUsername("testuser");
+        testUser.setEmail("test@example.com");
+        String testPassword = "testpass123";
+        String hashedTestPassword = passwordEncoder.encode(testPassword);
+        System.out.println("DEBUG: Seeding testuser with password: '" + testPassword + "'");
+        System.out.println("DEBUG: Hashed password: " + hashedTestPassword);
+        testUser.setPassword(hashedTestPassword);
+        testUser.setFirstName("Test");
+        testUser.setLastName("User");
+        testUser.setRole(UserRole.SOLVER);
+        testUser.setEmailVerified(true);
+        testUser.setOrganizationVerified(false);
+        testUser.setAvailableForHire(true);
+        testUser.setHourlyRate(45.0);
+        testUser.setSolvedCasesCount(0);
+        testUser.setActiveCasesCount(0);
+        testUser.setAverageRating(0.0);
+        testUser.setTotalRatings(0);
+        testUser.setBadges(new HashSet<>());
+        testUser.setExpertiseAreas(new HashSet<>(Arrays.asList("Theft", "Fraud")));
+        testUser.setInterests(new HashSet<>(Arrays.asList("Digital Forensics", "Criminal Psychology")));
+        testUser.setCreatedAt(LocalDateTime.now());
+        testUser.setUpdatedAt(LocalDateTime.now());
+        userService.createUser(testUser);
+
         // Create Badges
         Badge firstCaseBadge = new Badge();
         firstCaseBadge.setName("first_case");
@@ -128,6 +156,7 @@ public class DataSeeder implements CommandLineRunner {
         badgeService.createBadge(expertBadge);
 
         // Create Sample Case
+        /*
         CrimeCase sampleCase = new CrimeCase();
         sampleCase.setTitle("Mysterious Theft at Central Bank");
         sampleCase.setDescription("A sophisticated theft occurred at Central Bank. Security cameras were disabled and the vault was accessed without triggering alarms.");
@@ -141,10 +170,12 @@ public class DataSeeder implements CommandLineRunner {
         sampleCase.setUpdatedAt(LocalDateTime.now());
         
         crimeCaseService.createCase(sampleCase, organization);
+        */
 
         System.out.println("✅ Sample data seeded successfully!");
         System.out.println("👤 Admin: admin/admin123");
         System.out.println("🏢 Organization: police_dept/police123");
         System.out.println("🕵️ Solver: detective_john/john123");
+        System.out.println("🧪 Test User: testuser/testpass123");
     }
 } 

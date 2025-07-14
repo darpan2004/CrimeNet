@@ -6,6 +6,9 @@
     import jakarta.servlet.http.HttpServletResponse;
     import org.example.service.JwtService;
     import org.example.service.UserService;
+    import org.slf4j.Logger;
+    import org.slf4j.LoggerFactory;
+
     import org.springframework.beans.factory.annotation.Autowired;
     import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
     import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +23,8 @@
     @Component
     public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+        private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
         @Autowired
         private JwtService jwtService;
 
@@ -32,10 +37,21 @@
                 HttpServletResponse response,
                 FilterChain filterChain
         ) throws ServletException, IOException {
+            
+            logger.info("DEBUG: JWT Filter processing request: " + request.getMethod() + " " + request.getRequestURI());
+            
+            // Skip JWT filter for auth endpoints
+            if (request.getRequestURI().startsWith("/api/auth/")) {
+                logger.info("DEBUG: Skipping JWT filter for auth endpoint: " + request.getRequestURI());
+                filterChain.doFilter(request, response);
+                return;
+            }
+            
             final String authHeader = request.getHeader("Authorization");
             final String jwt;
             final String username;
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                logger.info("DEBUG: No Authorization header, continuing filter chain");
                 filterChain.doFilter(request, response);
                 return;
             }
