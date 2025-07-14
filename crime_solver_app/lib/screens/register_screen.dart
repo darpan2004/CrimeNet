@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
 import 'login_screen.dart';
+import '../models/user.dart'; // Added import for User model
+import '../services/auth_service.dart'; // Added import for AuthService
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -255,12 +257,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _handleRegister() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: Implement registration logic
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Registration functionality will be implemented soon!'),
-        ),
+      FocusScope.of(context).unfocus();
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
+      try {
+        final userJson = {
+          'username': _usernameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'firstName': _firstNameController.text.trim(),
+          'lastName': _lastNameController.text.trim(),
+          'role': 'SOLVER',
+          'password': _passwordController.text.trim(),
+        };
+        final authService = AuthService();
+        await authService.register(userJson);
+        Navigator.of(context).pop(); // Remove loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registration successful! Please log in.'),
+          ),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      } catch (e) {
+        Navigator.of(context).pop(); // Remove loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Registration failed: \\${e.toString()}')),
+        );
+      }
     }
   }
 }

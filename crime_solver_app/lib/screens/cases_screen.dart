@@ -1,228 +1,116 @@
 import 'package:flutter/material.dart';
-import '../constants/app_constants.dart';
+import '../models/case.dart';
+import '../services/auth_service.dart';
+import '../models/user.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class CasesScreen extends StatelessWidget {
-  const CasesScreen({super.key});
+class CasesScreen extends StatefulWidget {
+  final User? user;
+  const CasesScreen({Key? key, this.user}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(AppConstants.backgroundColor),
-      appBar: AppBar(
-        title: const Text('Cases'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.filter_list), onPressed: () {}),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          _buildCaseCard(
-            'Missing Person Case #123',
-            'High Priority',
-            'A 25-year-old woman has been missing for 3 days. Last seen at Central Park.',
-            '2 hours ago',
-            Colors.red,
-            Icons.person_search,
+  State<CasesScreen> createState() => _CasesScreenState();
+}
+
+class _CasesScreenState extends State<CasesScreen> {
+  late Future<List<Case>> _casesFuture;
+  final AuthService _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    _casesFuture = _authService.fetchCases();
+  }
+
+  void _showAddCaseDialog() {
+    final _titleController = TextEditingController();
+    final _descController = TextEditingController();
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Add New Case'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _titleController,
+                  decoration: const InputDecoration(labelText: 'Title'),
+                ),
+                TextField(
+                  controller: _descController,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final caseData = {
+                    'title': _titleController.text.trim(),
+                    'description': _descController.text.trim(),
+                  };
+                  try {
+                    await _authService.postCase(caseData);
+                    setState(() {
+                      _casesFuture = _authService.fetchCases();
+                    });
+                    Navigator.of(context).pop();
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to add case: $e')),
+                    );
+                  }
+                },
+                child: const Text('Add'),
+              ),
+            ],
           ),
-          _buildCaseCard(
-            'Bank Robbery Case #89',
-            'Medium Priority',
-            'Armed robbery at First National Bank. Security footage available.',
-            '1 day ago',
-            Colors.orange,
-            Icons.account_balance,
-          ),
-          _buildCaseCard(
-            'Vandalism Case #67',
-            'Low Priority',
-            'Graffiti found on public property. Multiple witnesses identified.',
-            '3 days ago',
-            Colors.green,
-            Icons.edit,
-          ),
-          _buildCaseCard(
-            'Fraud Case #45',
-            'High Priority',
-            'Online scam targeting elderly citizens. Multiple victims reported.',
-            '1 week ago',
-            Colors.red,
-            Icons.computer,
-          ),
-          _buildCaseCard(
-            'Theft Case #34',
-            'Medium Priority',
-            'Vehicle theft from parking garage. License plate captured.',
-            '2 weeks ago',
-            Colors.orange,
-            Icons.directions_car,
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: const Color(AppConstants.primaryColor),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
     );
   }
 
-  Widget _buildCaseCard(
-    String title,
-    String priority,
-    String description,
-    String time,
-    Color priorityColor,
-    IconData icon,
-  ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: priorityColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: priorityColor, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: priorityColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          priority,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: priorityColor,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              description,
-              style: TextStyle(
-                fontSize: 14,
-                color: const Color(AppConstants.textLightColor),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  time,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: const Color(AppConstants.textLightColor),
-                  ),
-                ),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.people,
-                      size: 16,
-                      color: const Color(AppConstants.textLightColor),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '3 investigators',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: const Color(AppConstants.textLightColor),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                        color: const Color(AppConstants.primaryColor),
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Text(
-                      'View Details',
-                      style: TextStyle(
-                        color: const Color(AppConstants.primaryColor),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(AppConstants.primaryColor),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Join Case',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+  @override
+  Widget build(BuildContext context) {
+    final user = widget.user;
+    final canPost =
+        user != null && (user.role == 'ADMIN' || user.role == 'ORGANIZATION');
+    return Scaffold(
+      appBar: AppBar(title: const Text('Cases')),
+      floatingActionButton:
+          canPost
+              ? FloatingActionButton(
+                onPressed: _showAddCaseDialog,
+                child: const Icon(Icons.add),
+                tooltip: 'Add Case',
+              )
+              : null,
+      body: FutureBuilder<List<Case>>(
+        future: _casesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No cases found.'));
+          }
+          final cases = snapshot.data!;
+          return ListView.builder(
+            itemCount: cases.length,
+            itemBuilder: (context, index) {
+              final c = cases[index];
+              return ListTile(
+                title: Text(c.title),
+                subtitle: Text(c.description),
+                trailing: Text(c.status),
+              );
+            },
+          );
+        },
       ),
     );
   }

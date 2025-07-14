@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_constants.dart';
 import '../models/user.dart';
+import '../models/case.dart';
 
 class AuthService {
   static const String _tokenKey = 'auth_token';
@@ -29,12 +30,12 @@ class AuthService {
     }
   }
 
-  Future<User> register(User user) async {
+  Future<User> register(Map<String, dynamic> userJson) async {
     try {
       final response = await http.post(
         Uri.parse('${AppConstants.authUrl}/register'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode(user.toJson()),
+        body: json.encode(userJson),
       );
 
       if (response.statusCode == 200) {
@@ -43,7 +44,7 @@ class AuthService {
         throw Exception('Registration failed: ${response.body}');
       }
     } catch (e) {
-      throw Exception('Registration failed: $e');
+      throw Exception('Registration failed: ${e.toString()}');
     }
   }
 
@@ -88,6 +89,40 @@ class AuthService {
       // Ignore errors
     }
     return null;
+  }
+
+  Future<List<Case>> fetchCases() async {
+    final token = await getToken();
+    if (token == null) throw Exception('Not authenticated');
+    final response = await http.get(
+      Uri.parse('${AppConstants.baseUrl}/cases'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Case.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to fetch cases: ${response.body}');
+    }
+  }
+
+  Future<void> postCase(Map<String, dynamic> caseData) async {
+    final token = await getToken();
+    if (token == null) throw Exception('Not authenticated');
+    final response = await http.post(
+      Uri.parse('${AppConstants.baseUrl}/cases'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(caseData),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to post case: ${response.body}');
+    }
   }
 
   Future<String?> getToken() async {

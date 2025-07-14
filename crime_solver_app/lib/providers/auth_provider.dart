@@ -29,12 +29,12 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> register(User user) async {
+  Future<void> register(Map<String, dynamic> userJson) async {
     _setLoading(true);
     _clearError();
 
     try {
-      _user = await _authService.register(user);
+      _user = await _authService.register(userJson);
       notifyListeners();
     } catch (e) {
       _setError(e.toString());
@@ -58,11 +58,16 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> checkAuthStatus() async {
+    _setLoading(true);
+    _clearError();
     try {
       _user = await _authService.getCurrentUser();
       notifyListeners();
     } catch (e) {
-      // Ignore errors during auth check
+      _user = null;
+      notifyListeners();
+    } finally {
+      _setLoading(false);
     }
   }
 
