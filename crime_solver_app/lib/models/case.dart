@@ -4,6 +4,8 @@ class Case {
   final String description;
   final String status;
   final String? postedAt;
+  final String? imageUrl;
+  final String? mediaUrl;
 
   Case({
     required this.id,
@@ -11,6 +13,8 @@ class Case {
     required this.description,
     required this.status,
     this.postedAt,
+    this.imageUrl,
+    this.mediaUrl,
   });
 
   factory Case.fromJson(Map<String, dynamic> json) {
@@ -20,6 +24,8 @@ class Case {
       description: json['description'] ?? '',
       status: json['status'] ?? '',
       postedAt: json['postedAt'],
+      imageUrl: json['imageUrl'],
+      mediaUrl: json['mediaUrl'],
     );
   }
 }

@@ -20,10 +20,14 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final result = await _authService.login(username, password);
-      _user = User.fromJson(result['user']);
-      notifyListeners();
+      if (result['user'] != null) {
+        _user = User.fromJson(result['user']);
+        notifyListeners();
+      } else {
+        _setError('Login failed: Invalid response from server.');
+      }
     } catch (e) {
-      _setError(e.toString());
+      _setError(e.toString().replaceAll('Exception: ', ''));
     } finally {
       _setLoading(false);
     }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
 import 'login_screen.dart';
-import '../models/user.dart'; // Added import for User model
+// Added import for User model
 import '../services/auth_service.dart'; // Added import for AuthService
 
 class RegisterScreen extends StatefulWidget {

@@ -1,17 +1,26 @@
 package org.example.service;
 
-import org.example.entity.*;
-import org.example.repository.CrimeCaseRepository;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.example.entity.CaseDifficulty;
+import org.example.entity.CaseParticipation;
+import org.example.entity.CasePrivacy;
+import org.example.entity.CaseStatus;
+import org.example.entity.CaseType;
+import org.example.entity.CrimeCase;
+import org.example.entity.ParticipationRole;
+import org.example.entity.ParticipationStatus;
+import org.example.entity.User;
+import org.example.entity.UserRole;
 import org.example.repository.CaseParticipationRepository;
+import org.example.repository.CrimeCaseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -67,6 +76,10 @@ public class CrimeCaseService {
     
     public List<CrimeCase> findAll() {
         return crimeCaseRepository.findAll();
+    }
+    
+    public Page<CrimeCase> findAll(Pageable pageable) {
+        return crimeCaseRepository.findAll(pageable);
     }
     
     public void deleteCase(Long id) {

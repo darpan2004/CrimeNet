@@ -3,6 +3,8 @@ import '../constants/app_constants.dart';
 import 'cases_screen.dart';
 import 'profile_screen.dart';
 import 'dashboard_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,17 +16,20 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const DashboardScreen(),
-    const CasesScreen(),
-    const ProfileScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<AuthProvider>(context).user;
+    if (user == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    final List<Widget> screens = [
+      const DashboardScreen(),
+      CasesScreen(user: user),
+      const ProfileScreen(),
+    ];
     return Scaffold(
       backgroundColor: const Color(AppConstants.backgroundColor),
-      body: _screens[_currentIndex],
+      body: screens[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,

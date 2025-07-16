@@ -61,43 +61,28 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> loginRequest) {
+    public ResponseEntity<AuthResponse> login(@RequestBody Map<String, String> loginRequest) {
         System.out.println("DEBUG: Login endpoint called");
-        System.out.println("DEBUG: Request body: " + loginRequest);
-        
         String username = loginRequest.get("username");
         String password = loginRequest.get("password");
-        System.out.println("DEBUG: Username: " + username);
-        System.out.println("DEBUG: Password received: '" + password + "'");
-        System.out.println("DEBUG: Password length: " + (password != null ? password.length() : "null"));
-
         try {
-            System.out.println("DEBUG: Attempting authentication");
             Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, password)
             );
-            System.out.println("DEBUG: Authentication successful");
-
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            System.out.println("DEBUG: SecurityContext set");
-
             User user = userService.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
-            System.out.println("DEBUG: User found: " + user.getUsername());
-
             String jwt = jwtService.generateToken(user);
-            System.out.println("DEBUG: JWT generated");
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("token", jwt);
-            response.put("type", "Bearer");
-            response.put("user", user);
-
-            System.out.println("DEBUG: Login successful for user: " + username);
+            AuthResponse response = new AuthResponse(
+                jwt,
+                "Bearer",
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole().toString()
+            );
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            System.out.println("DEBUG: Login failed: " + e.getMessage());
-            e.printStackTrace();
             throw e;
         }
     }
@@ -260,5 +245,29 @@ public class AuthController {
         }
         
         return ResponseEntity.ok(response);
+    }
+
+    public static class AuthResponse {
+        private String token;
+        private String type;
+        private Long id;
+        private String username;
+        private String email;
+        private String role;
+
+        public AuthResponse(String token, String type, Long id, String username, String email, String role) {
+            this.token = token;
+            this.type = type;
+            this.id = id;
+            this.username = username;
+            this.email = email;
+            this.role = role;
+        }
+        public String getToken() { return token; }
+        public String getType() { return type; }
+        public Long getId() { return id; }
+        public String getUsername() { return username; }
+        public String getEmail() { return email; }
+        public String getRole() { return role; }
     }
 } 

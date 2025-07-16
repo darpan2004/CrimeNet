@@ -1,6 +1,7 @@
 package org.example.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.example.entity.CaseDifficulty;
 import org.example.entity.CaseStatus;
@@ -24,6 +25,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @RestController
 @RequestMapping("/api/cases")
@@ -71,8 +75,46 @@ public class CrimeCaseController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CrimeCase>> getAllCases() {
-        return ResponseEntity.ok(crimeCaseService.findAll());
+    public ResponseEntity<List<CaseSummary>> getAllCases() {
+        List<CaseSummary> summaries = crimeCaseService.findAll().stream()
+            .map(c -> new CaseSummary(
+                c.getId(),
+                c.getTitle(),
+                c.getDescription(),
+                c.getStatus() != null ? c.getStatus().toString() : null,
+                c.getPostedAt() != null ? c.getPostedAt().toString() : null,
+                c.getImageUrl(),
+                c.getMediaUrl()
+            ))
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(summaries);
+    }
+
+    public static class CaseSummary {
+        private Long id;
+        private String title;
+        private String description;
+        private String status;
+        private String postedAt;
+        private String imageUrl;
+        private String mediaUrl;
+
+        public CaseSummary(Long id, String title, String description, String status, String postedAt, String imageUrl, String mediaUrl) {
+            this.id = id;
+            this.title = title;
+            this.description = description;
+            this.status = status;
+            this.postedAt = postedAt;
+            this.imageUrl = imageUrl;
+            this.mediaUrl = mediaUrl;
+        }
+        public Long getId() { return id; }
+        public String getTitle() { return title; }
+        public String getDescription() { return description; }
+        public String getStatus() { return status; }
+        public String getPostedAt() { return postedAt; }
+        public String getImageUrl() { return imageUrl; }
+        public String getMediaUrl() { return mediaUrl; }
     }
 
     @GetMapping("/public")

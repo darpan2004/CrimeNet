@@ -86,6 +86,9 @@ public class CrimeCase {
     private String awardedBadge;
     private LocalDateTime badgeAwardedAt;
     
+    private String imageUrl;
+    private String mediaUrl;
+    
     @OneToMany(mappedBy = "crimeCase", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<CaseFile> files = new ArrayList<>();
     
@@ -189,6 +192,11 @@ public class CrimeCase {
     
     public LocalDateTime getBadgeAwardedAt() { return badgeAwardedAt; }
     public void setBadgeAwardedAt(LocalDateTime badgeAwardedAt) { this.badgeAwardedAt = badgeAwardedAt; }
+    
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public String getMediaUrl() { return mediaUrl; }
+    public void setMediaUrl(String mediaUrl) { this.mediaUrl = mediaUrl; }
     
     public List<CaseFile> getFiles() { return files; }
     public void setFiles(List<CaseFile> files) { this.files = files; }

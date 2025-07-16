@@ -3,10 +3,11 @@ import '../models/case.dart';
 import '../services/auth_service.dart';
 import '../models/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'create_case_screen.dart';
 
 class CasesScreen extends StatefulWidget {
   final User? user;
-  const CasesScreen({Key? key, this.user}) : super(key: key);
+  const CasesScreen({super.key, this.user});
 
   @override
   State<CasesScreen> createState() => _CasesScreenState();
@@ -19,58 +20,28 @@ class _CasesScreenState extends State<CasesScreen> {
   @override
   void initState() {
     super.initState();
+    //  print("darpan " + widget.user!.role);
     _casesFuture = _authService.fetchCases();
   }
 
-  void _showAddCaseDialog() {
-    final _titleController = TextEditingController();
-    final _descController = TextEditingController();
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Add New Case'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: _titleController,
-                  decoration: const InputDecoration(labelText: 'Title'),
-                ),
-                TextField(
-                  controller: _descController,
-                  decoration: const InputDecoration(labelText: 'Description'),
-                ),
-              ],
+  void _navigateToCreateCase() async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder:
+            (context) => CreateCaseScreen(
+              onCaseCreated: () {
+                setState(() {
+                  _casesFuture = _authService.fetchCases();
+                });
+              },
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final caseData = {
-                    'title': _titleController.text.trim(),
-                    'description': _descController.text.trim(),
-                  };
-                  try {
-                    await _authService.postCase(caseData);
-                    setState(() {
-                      _casesFuture = _authService.fetchCases();
-                    });
-                    Navigator.of(context).pop();
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to add case: $e')),
-                    );
-                  }
-                },
-                child: const Text('Add'),
-              ),
-            ],
-          ),
+      ),
     );
+    if (result == true) {
+      setState(() {
+        _casesFuture = _authService.fetchCases();
+      });
+    }
   }
 
   @override
@@ -83,9 +54,9 @@ class _CasesScreenState extends State<CasesScreen> {
       floatingActionButton:
           canPost
               ? FloatingActionButton(
-                onPressed: _showAddCaseDialog,
-                child: const Icon(Icons.add),
+                onPressed: _navigateToCreateCase,
                 tooltip: 'Add Case',
+                child: const Icon(Icons.add),
               )
               : null,
       body: FutureBuilder<List<Case>>(

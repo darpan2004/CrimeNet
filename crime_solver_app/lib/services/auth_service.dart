@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_constants.dart';
 import '../models/user.dart';
 import '../models/case.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 
 class AuthService {
   static const String _tokenKey = 'auth_token';
@@ -17,16 +19,57 @@ class AuthService {
         body: json.encode({'username': username, 'password': password}),
       );
 
+      print('Login response status: ${response.statusCode}');
+      print('Login response body: ${response.body}');
+
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        await _saveToken(data['token']);
-        await _saveUser(User.fromJson(data['user']));
-        return data;
+        if (response.body.isNotEmpty) {
+          final data = json.decode(response.body);
+          if (data is Map<String, dynamic>) {
+            // If user info is at the root, wrap it in a 'user' field for consistency
+            if (data.containsKey('user')) {
+              await _saveToken(data['token']);
+              await _saveUser(User.fromJson(data['user']));
+              return data;
+            } else {
+              // Extract user info from root keys
+              final userMap = <String, dynamic>{
+                'id': data['id'],
+                'username': data['username'],
+                'email': data['email'],
+                'role': data['role'],
+                // add more fields if needed
+              };
+              await _saveToken(data['token']);
+              await _saveUser(User.fromJson(userMap));
+              return {'token': data['token'], 'user': userMap};
+            }
+          } else {
+            throw Exception('Unexpected response format: ${response.body}');
+          }
+        } else {
+          throw Exception('Empty response body');
+        }
       } else {
-        throw Exception('Login failed: ${response.body}');
+        // Try to parse error message from backend, else return generic error
+        String errorMsg = 'Login failed: Status ${response.statusCode}';
+        if (response.body.isNotEmpty) {
+          try {
+            final err = json.decode(response.body);
+            if (err is Map<String, dynamic> && err['error'] != null) {
+              errorMsg = err['error'].toString();
+            } else {
+              errorMsg = response.body;
+            }
+          } catch (_) {
+            errorMsg = response.body;
+          }
+        }
+        throw Exception(errorMsg);
       }
     } catch (e) {
-      throw Exception('Login failed: $e');
+      print('Login exception: ${e.toString()}');
+      throw Exception('Login failed: ${e.toString()}');
     }
   }
 
@@ -158,5 +201,45 @@ class AuthService {
   Future<bool> isLoggedIn() async {
     final token = await getToken();
     return token != null;
+  }
+
+  Future<String?> uploadFileToFirebase(File file, String path) async {
+    try {
+      final ref = FirebaseStorage.instance.ref().child(path);
+      final uploadTask = await ref.putFile(file);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      print('Firebase upload error: $e');
+      return null;
+    }
+  }
+
+  Future<void> postCaseWithMedia({
+    required String title,
+    required String description,
+    File? imageFile,
+    File? mediaFile,
+  }) async {
+    String? imageUrl;
+    String? mediaUrl;
+    if (imageFile != null) {
+      imageUrl = await uploadFileToFirebase(
+        imageFile,
+        'case_images/${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}',
+      );
+    }
+    if (mediaFile != null) {
+      mediaUrl = await uploadFileToFirebase(
+        mediaFile,
+        'case_media/${DateTime.now().millisecondsSinceEpoch}_${mediaFile.path.split('/').last}',
+      );
+    }
+    final caseData = {
+      'title': title,
+      'description': description,
+      if (imageUrl != null) 'imageUrl': imageUrl,
+      if (mediaUrl != null) 'mediaUrl': mediaUrl,
+    };
+    await postCase(caseData);
   }
 }
