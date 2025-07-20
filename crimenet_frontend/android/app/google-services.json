@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "310549411086",
+    "project_id": "crime-solver-platform",
+    "storage_bucket": "crime-solver-platform.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:310549411086:android:3404dae1800c1c3696535f",
+        "android_client_info": {
+          "package_name": "com.example.crimenet_frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGo0qoWZ7O2FwVEGiI4j-iE2T_UNKTT70"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

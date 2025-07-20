@@ -1,6 +1,7 @@
 package org.example.controller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.example.entity.CaseDifficulty;
@@ -14,7 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,9 +28,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 @RestController
 @RequestMapping("/api/cases")
@@ -174,5 +174,62 @@ public class CrimeCaseController {
             default:
                 return ResponseEntity.ok().build();
         }
+    }
+
+    @GetMapping("/{id}/comments")
+    public ResponseEntity<List<CommentDTO>> getCaseComments(@PathVariable Long id) {
+        return crimeCaseService.findById(id)
+            .map(crimeCase -> {
+                List<CommentDTO> comments = crimeCase.getComments().stream()
+                    .map(c -> new CommentDTO(
+                        c.getId(),
+                        c.getUser() != null ? c.getUser().getUsername() : "Unknown",
+                        c.getContent(),
+                        c.getCreatedAt() != null ? c.getCreatedAt().toString() : null
+                    ))
+                    .collect(Collectors.toList());
+                return ResponseEntity.ok(comments);
+            })
+            .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{id}/comments")
+    public ResponseEntity<?> addCaseComment(@PathVariable Long id, @RequestBody Map<String, String> body, @AuthenticationPrincipal UserDetails userDetails) {
+        String content = body.get("content");
+        if (content == null || content.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Content is required"));
+        }
+        return crimeCaseService.findById(id)
+            .map(crimeCase -> {
+                User user = userService.findByUsername(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+                org.example.entity.CaseComment comment = new org.example.entity.CaseComment();
+                comment.setContent(content);
+                comment.setCrimeCase(crimeCase);
+                comment.setUser(user);
+                // createdAt is set by @PrePersist
+                crimeCase.getComments().add(comment);
+                crimeCaseService.updateCase(crimeCase);
+                return ResponseEntity.ok().build();
+            })
+            .orElse(ResponseEntity.notFound().build());
+    }
+
+    public static class CommentDTO {
+        private Long id;
+        private String author;
+        private String content;
+        private String createdAt;
+
+        public CommentDTO(Long id, String author, String content, String createdAt) {
+            this.id = id;
+            this.author = author;
+            this.content = content;
+            this.createdAt = createdAt;
+        }
+        public Long getId() { return id; }
+        public String getAuthor() { return author; }
+        public String getContent() { return content; }
+        public String getCreatedAt() { return createdAt; }
     }
 }
