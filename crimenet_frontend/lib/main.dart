@@ -5,6 +5,7 @@ import 'constants/app_constants.dart';
 import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/dm_list_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -74,5 +75,30 @@ class AuthWrapper extends StatelessWidget {
     } else {
       return const LoginScreen();
     }
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Home'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.message),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DMListScreen()),
+              );
+            },
+          ),
+        ],
+      ),
+      // ... existing body ...
+    );
   }
 }
