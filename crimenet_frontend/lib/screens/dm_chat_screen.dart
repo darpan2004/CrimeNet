@@ -8,6 +8,7 @@ import '../providers/auth_provider.dart';
 import 'package:stomp_dart_client/stomp.dart';
 import 'package:stomp_dart_client/stomp_config.dart';
 import 'package:stomp_dart_client/stomp_frame.dart';
+import '../services/auth_service.dart';
 
 class DMChatScreen extends StatefulWidget {
   final User peerUser;
@@ -37,8 +38,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
   }
 
   Future<void> fetchChatHistory() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final token = await authProvider.getToken();
+    final token = await AuthService().getToken();
     final response = await http.get(
       Uri.parse('${AppConstants.baseUrl}/dm/chat/${widget.peerUser.id}'),
       headers: {'Authorization': 'Bearer $token'},
@@ -101,7 +101,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Chat with ${widget.peerUser.username}')),
+      appBar: AppBar(
+        title: Text('Chat with ${widget.peerUser.username ?? 'Unknown'}'),
+      ),
       body: Column(
         children: [
           Expanded(
@@ -109,7 +111,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
               itemCount: messages.length,
               itemBuilder: (context, index) {
                 final msg = messages[index];
-                final isMe = msg['sender']['id'] == currentUser?.id;
+                final isMe =
+                    msg['sender'] != null &&
+                    msg['sender']['id'] == currentUser?.id;
                 return Align(
                   alignment:
                       isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -123,7 +127,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                       color: isMe ? Colors.blue[100] : Colors.grey[200],
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(msg['content'] ?? ''),
+                    child: Text(msg['content'] ?? 'No content'),
                   ),
                 );
               },

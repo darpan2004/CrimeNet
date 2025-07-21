@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.example.dto.CommentDTO;
 import org.example.entity.CaseDifficulty;
 import org.example.entity.CaseStatus;
 import org.example.entity.CaseType;
@@ -181,12 +182,15 @@ public class CrimeCaseController {
         return crimeCaseService.findById(id)
             .map(crimeCase -> {
                 List<CommentDTO> comments = crimeCase.getComments().stream()
-                    .map(c -> new CommentDTO(
-                        c.getId(),
-                        c.getUser() != null ? c.getUser().getUsername() : "Unknown",
-                        c.getContent(),
-                        c.getCreatedAt() != null ? c.getCreatedAt().toString() : null
-                    ))
+                    .map(c -> {
+                        CommentDTO dto = new CommentDTO();
+                        dto.setId(c.getId());
+                        dto.setUserId(c.getUser() != null ? c.getUser().getId() : null);
+                        dto.setAuthor(c.getUser() != null ? c.getUser().getUsername() : "Unknown");
+                        dto.setContent(c.getContent());
+                        dto.setCreatedAt(c.getCreatedAt() != null ? c.getCreatedAt().toString() : null);
+                        return dto;
+                    })
                     .collect(Collectors.toList());
                 return ResponseEntity.ok(comments);
             })
@@ -213,23 +217,5 @@ public class CrimeCaseController {
                 return ResponseEntity.ok().build();
             })
             .orElse(ResponseEntity.notFound().build());
-    }
-
-    public static class CommentDTO {
-        private Long id;
-        private String author;
-        private String content;
-        private String createdAt;
-
-        public CommentDTO(Long id, String author, String content, String createdAt) {
-            this.id = id;
-            this.author = author;
-            this.content = content;
-            this.createdAt = createdAt;
-        }
-        public Long getId() { return id; }
-        public String getAuthor() { return author; }
-        public String getContent() { return content; }
-        public String getCreatedAt() { return createdAt; }
     }
 }

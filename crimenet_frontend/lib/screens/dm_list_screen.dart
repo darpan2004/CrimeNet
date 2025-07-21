@@ -1,3 +1,4 @@
+export 'dm_list_screen.dart' show DMInboxScreen;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -6,35 +7,35 @@ import 'dm_chat_screen.dart';
 import '../constants/app_constants.dart';
 import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+import '../services/auth_service.dart';
 
-class DMListScreen extends StatefulWidget {
-  const DMListScreen({Key? key}) : super(key: key);
+class DMInboxScreen extends StatefulWidget {
+  const DMInboxScreen({Key? key}) : super(key: key);
 
   @override
-  State<DMListScreen> createState() => _DMListScreenState();
+  State<DMInboxScreen> createState() => _DMInboxScreenState();
 }
 
-class _DMListScreenState extends State<DMListScreen> {
-  List<User> eligibleUsers = [];
+class _DMInboxScreenState extends State<DMInboxScreen> {
+  List<User> dmUsers = [];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    fetchEligibleUsers();
+    fetchDMUsers();
   }
 
-  Future<void> fetchEligibleUsers() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final token = await authProvider.getToken();
+  Future<void> fetchDMUsers() async {
+    final token = await AuthService().getToken();
     final response = await http.get(
-      Uri.parse('${AppConstants.baseUrl}/dm/eligible'),
+      Uri.parse('${AppConstants.baseUrl}/dm/history'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
       setState(() {
-        eligibleUsers = data.map((u) => User.fromJson(u)).toList();
+        dmUsers = data.map((u) => User.fromJson(u)).toList();
         isLoading = false;
       });
     } else {
@@ -47,20 +48,20 @@ class _DMListScreenState extends State<DMListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Direct Messages')),
+      appBar: AppBar(title: const Text('DM Inbox')),
       body:
           isLoading
               ? const Center(child: CircularProgressIndicator())
-              : eligibleUsers.isEmpty
-              ? const Center(child: Text('No users available for DM.'))
+              : dmUsers.isEmpty
+              ? const Center(child: Text('No DMs yet.'))
               : ListView.builder(
-                itemCount: eligibleUsers.length,
+                itemCount: dmUsers.length,
                 itemBuilder: (context, index) {
-                  final user = eligibleUsers[index];
+                  final user = dmUsers[index];
                   return ListTile(
                     leading: const Icon(Icons.person),
-                    title: Text(user.username ?? ''),
-                    subtitle: Text(user.email ?? ''),
+                    title: Text(user.username ?? 'Unknown'),
+                    subtitle: Text(user.email ?? 'No email'),
                     onTap: () {
                       Navigator.push(
                         context,

@@ -4,6 +4,9 @@ import '../services/auth_service.dart';
 import '../models/user.dart';
 import 'create_case_screen.dart';
 import 'case_detail_screen.dart';
+import 'dm_list_screen.dart';
+import 'dm_chat_screen.dart';
+import 'profile_screen.dart';
 
 class CasesScreen extends StatefulWidget {
   final User? user;
@@ -50,7 +53,20 @@ class _CasesScreenState extends State<CasesScreen> {
     final canPost =
         user != null && (user.role == 'ADMIN' || user.role == 'ORGANIZATION');
     return Scaffold(
-      appBar: AppBar(title: const Text('Cases')),
+      appBar: AppBar(
+        title: const Text('Cases'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.message),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DMInboxScreen()),
+              );
+            },
+          ),
+        ],
+      ),
       floatingActionButton:
           canPost
               ? FloatingActionButton(

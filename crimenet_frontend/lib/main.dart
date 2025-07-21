@@ -6,10 +6,50 @@ import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/dm_list_screen.dart';
+import 'screens/cases_screen.dart';
+import 'screens/profile_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const CrimeSolverApp());
+}
+
+class MainNavigation extends StatefulWidget {
+  const MainNavigation({Key? key}) : super(key: key);
+
+  @override
+  State<MainNavigation> createState() => _MainNavigationState();
+}
+
+class _MainNavigationState extends State<MainNavigation> {
+  int _selectedIndex = 0;
+  static const List<Widget> _screens = <Widget>[
+    CasesScreen(),
+    DMInboxScreen(),
+    ProfileScreen(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _screens[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.folder), label: 'Cases'),
+          BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Chat'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
+    );
+  }
 }
 
 class CrimeSolverApp extends StatelessWidget {
@@ -17,88 +57,33 @@ class CrimeSolverApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: Firebase.initializeApp(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return MaterialApp(
-            home: Scaffold(body: Center(child: CircularProgressIndicator())),
-          );
-        } else if (snapshot.hasError) {
-          return MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: Text('Firebase init error: \\n${snapshot.error}'),
-              ),
-            ),
-          );
-        }
-        // Firebase initialized, show app
-        return MultiProvider(
-          providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
-          child: MaterialApp(
-            title: 'Crime Solver',
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              primarySwatch: Colors.blue,
-              primaryColor: const Color(AppConstants.primaryColor),
-              scaffoldBackgroundColor: const Color(
-                AppConstants.backgroundColor,
-              ),
-              appBarTheme: const AppBarTheme(
-                backgroundColor: Color(AppConstants.primaryColor),
-                foregroundColor: Colors.white,
-              ),
-              textTheme: const TextTheme(
-                bodyLarge: TextStyle(color: Color(AppConstants.textColor)),
-                bodyMedium: TextStyle(color: Color(AppConstants.textColor)),
-              ),
-            ),
-            home: const AuthWrapper(),
-          ),
-        );
-      },
+    return MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
+      child: MaterialApp(
+        title: 'Crime Solver',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          primaryColor: const Color(AppConstants.primaryColor),
+          scaffoldBackgroundColor: const Color(AppConstants.backgroundColor),
+        ),
+        home: AuthWrapper(),
+      ),
     );
   }
 }
 
 class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     if (authProvider.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    } else if (authProvider.user != null) {
-      return const HomeScreen();
+    }
+    if (authProvider.isLoggedIn) {
+      return const MainNavigation();
     } else {
       return const LoginScreen();
     }
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.message),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const DMListScreen()),
-              );
-            },
-          ),
-        ],
-      ),
-      // ... existing body ...
-    );
   }
 }

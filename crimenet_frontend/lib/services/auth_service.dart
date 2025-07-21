@@ -203,8 +203,11 @@ class AuthService {
     );
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
+      print("see the comments" + data.toString());
       return data.map((json) => Comment.fromJson(json)).toList();
     } else {
+      print("see the comments" + "error");
+
       throw Exception('Failed to fetch comments: ${response.body}');
     }
   }
@@ -221,6 +224,38 @@ class AuthService {
     );
     if (response.statusCode != 200) {
       throw Exception('Failed to post comment: ${response.body}');
+    }
+  }
+
+  Future<User?> getUserById(int userId) async {
+    final token = await getToken();
+    final response = await http.get(
+      Uri.parse('${AppConstants.usersUrl}/$userId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+    if (response.statusCode == 200) {
+      return User.fromJson(json.decode(response.body));
+    } else {
+      return null;
+    }
+  }
+
+  Future<User?> getUserByUsername(String username) async {
+    final token = await getToken();
+    final response = await http.get(
+      Uri.parse('${AppConstants.usersUrl}/username/$username'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+    if (response.statusCode == 200) {
+      return User.fromJson(json.decode(response.body));
+    } else {
+      return null;
     }
   }
 

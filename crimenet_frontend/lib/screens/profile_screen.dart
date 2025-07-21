@@ -4,9 +4,12 @@ import 'login_screen.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/direct_message_service.dart';
+import 'dm_chat_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final int? userId;
+  const ProfileScreen({Key? key, this.userId}) : super(key: key);
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -29,7 +32,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _error = null;
     });
     try {
-      final user = await AuthService().getCurrentUser();
+      User? user;
+      if (widget.userId != null) {
+        print(widget.userId!.toString() + " darpan");
+        user = await AuthService().getUserById(widget.userId!);
+        if (user == null &&
+            ModalRoute.of(context)?.settings.arguments is String) {
+          // Fallback: try to fetch by username if provided as argument
+          final username =
+              ModalRoute.of(context)?.settings.arguments as String?;
+          if (username != null && username.isNotEmpty) {
+            user = await AuthService().getUserByUsername(username);
+          }
+        }
+        if (user == null) {
+          setState(() {
+            _user = null;
+            _isLoading = false;
+            _error = 'User not found.';
+          });
+          return;
+        }
+      } else {
+        user = await AuthService().getCurrentUser();
+      }
       setState(() {
         _user = user;
         _isLoading = false;
@@ -51,15 +77,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.remove('jwt_token');
-              if (context.mounted) {
-                Navigator.of(context).pushReplacementNamed('/login');
+          FutureBuilder<User?>(
+            future: AuthService().getCurrentUser(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data == null || _user == null)
+                return SizedBox.shrink();
+              final currentUserId = snapshot.data!.id;
+              if (_user!.id == currentUserId) {
+                return IconButton(
+                  icon: const Icon(Icons.logout),
+                  tooltip: 'Logout',
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.remove('jwt_token');
+                    if (context.mounted) {
+                      Navigator.of(context).pushReplacementNamed('/login');
+                    }
+                  },
+                );
               }
+              return SizedBox.shrink();
             },
           ),
         ],
@@ -143,20 +180,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     // Profile Sections
                     _buildSection('Personal Information', [
-                      _buildProfileItem(Icons.email, 'Email', _user!.email),
-                      if (_user!.phoneNumber != null)
+                      _buildProfileItem(
+                        Icons.email,
+                        'Email',
+                        _user!.email ?? 'Not provided',
+                      ),
+                      if (_user!.phoneNumber != null &&
+                          _user!.phoneNumber!.isNotEmpty)
                         _buildProfileItem(
                           Icons.phone,
                           'Phone',
                           _user!.phoneNumber!,
                         ),
-                      if (_user!.location != null)
+                      if (_user!.location != null &&
+                          _user!.location!.isNotEmpty)
                         _buildProfileItem(
                           Icons.location_on,
                           'Location',
                           _user!.location!,
                         ),
-                      if (_user!.experience != null)
+                      if (_user!.experience != null &&
+                          _user!.experience!.isNotEmpty)
                         _buildProfileItem(
                           Icons.work,
                           'Experience',
@@ -172,7 +216,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           'Specialization',
                           _user!.specializationsList.join(', '),
                         ),
-                      if (_user!.certifications != null)
+                      if (_user!.certifications != null &&
+                          _user!.certifications!.isNotEmpty)
                         _buildProfileItem(
                           Icons.school,
                           'Certifications',
@@ -203,84 +248,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 24),
 
                     // Action Buttons
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(
-                            AppConstants.primaryColor,
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Edit Profile',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LoginScreen(),
-                            ),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                            color: const Color(AppConstants.accentColor),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          'Logout',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(AppConstants.accentColor),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () async {
-                        try {
-                          final user = await AuthService().getCurrentUser();
-                          print('User fetched from /me: \\${user?.toJson()}');
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'User fetched: \\${user?.username ?? 'null'}',
+                    FutureBuilder<User?>(
+                      future: AuthService().getCurrentUser(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData || snapshot.data == null) {
+                          return SizedBox.shrink();
+                        }
+                        final currentUserId = snapshot.data!.id;
+                        if (_user!.id == currentUserId) {
+                          return Column(
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: () {},
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(
+                                      AppConstants.primaryColor,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Edit Profile',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => const LoginScreen(),
+                                      ),
+                                    );
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(
+                                      color: const Color(
+                                        AppConstants.accentColor,
+                                      ),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Logout',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(
+                                        AppConstants.accentColor,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           );
-                        } catch (e) {
-                          print(
-                            'Error fetching user from /me: \\${e.toString()}',
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: \\${e.toString()}')),
-                          );
+                        } else {
+                          // Show prominent Send Message button for other users
+                          return _buildChatButton();
                         }
                       },
-                      child: const Text('Fetch /me and Print'),
                     ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -364,6 +413,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildChatButton() {
+    if (_user == null) return SizedBox.shrink();
+    return FutureBuilder<User?>(
+      future: AuthService().getCurrentUser(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data == null)
+          return SizedBox.shrink();
+        final currentUserId = snapshot.data!.id;
+        if (_user!.id == currentUserId) return SizedBox.shrink();
+        return FutureBuilder<bool>(
+          future: DirectMessageService().isEligibleForDM(
+            currentUserId!,
+            _user!.id!,
+          ),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox.shrink();
+            }
+            if (snapshot.data == true) {
+              return SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.message),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DMChatScreen(peerUser: _user!),
+                      ),
+                    );
+                  },
+                  label: const Text('Send Message'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(AppConstants.primaryColor),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        );
+      },
     );
   }
 }

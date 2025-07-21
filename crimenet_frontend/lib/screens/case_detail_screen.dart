@@ -3,6 +3,7 @@ import '../models/case.dart';
 import '../models/comment.dart';
 import '../services/auth_service.dart';
 import 'package:video_player/video_player.dart';
+import '../screens/profile_screen.dart'; // Added import for ProfileScreen
 
 class CaseDetailScreen extends StatefulWidget {
   final Case caseItem;
@@ -29,6 +30,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
       'Case details: id= [33m${c.id} [0m, title=${c.title}, description=${c.description}, status=${c.status}, postedAt=${c.postedAt}, imageUrl=${c.imageUrl}, mediaUrl=${c.mediaUrl}',
     );
     _commentsFuture = _authService.fetchCaseComments(widget.caseItem.id);
+
     _initVideo();
   }
 
@@ -75,6 +77,29 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
         _isPosting = false;
       });
     }
+  }
+
+  Widget _buildCommentItem(Comment comment) {
+    return GestureDetector(
+      onTap: () {
+        print(
+          'Navigating to profile of userId: ${comment.userId}, author: ${comment.author}',
+        );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProfileScreen(userId: comment.userId),
+          ),
+        );
+      },
+      child: Card(
+        child: ListTile(
+          leading: const Icon(Icons.person),
+          title: Text(comment.author.isNotEmpty ? comment.author : 'Unknown'),
+          subtitle: Text(comment.content),
+        ),
+      ),
+    );
   }
 
   @override
@@ -145,19 +170,11 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                 }
                 final comments = snapshot.data!;
                 return Column(
-                  children:
-                      comments
-                          .map(
-                            (c) => ListTile(
-                              title: Text(c.author),
-                              subtitle: Text(c.content),
-                              trailing: Text(c.createdAt ?? ''),
-                            ),
-                          )
-                          .toList(),
+                  children: comments.map((c) => _buildCommentItem(c)).toList(),
                 );
               },
             ),
+
             const SizedBox(height: 16),
             Row(
               children: [
