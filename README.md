@@ -100,7 +100,7 @@ flutter run
 
 ## 📬 Contact
 
-For questions or collaboration, reach out via [LinkedIn](https://www.linkedin.com/) or open an issue!
+For questions or collaboration, reach out via [LinkedIn](https://www.linkedin.com/in/darpankhatri/) or open an issue!
 
 ---
 
