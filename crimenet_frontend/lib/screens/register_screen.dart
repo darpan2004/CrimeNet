@@ -19,6 +19,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   bool _obscurePassword = true;
+  String _selectedRole = 'SOLVER';
+  final List<String> roles = ['SOLVER', 'ORGANIZATION', 'ADMIN', 'RECRUITER'];
 
   @override
   void dispose() {
@@ -200,6 +202,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 32),
 
+                // Role Selection
+                DropdownButtonFormField<String>(
+                  value: _selectedRole,
+                  items:
+                      roles
+                          .map(
+                            (role) => DropdownMenuItem(
+                              value: role,
+                              child: Text(role),
+                            ),
+                          )
+                          .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedRole = value!;
+                    });
+                  },
+                  decoration: InputDecoration(labelText: 'Role'),
+                ),
+                const SizedBox(height: 32),
+
                 // Register Button
                 ElevatedButton(
                   onPressed: _handleRegister,
@@ -269,7 +292,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'email': _emailController.text.trim(),
           'firstName': _firstNameController.text.trim(),
           'lastName': _lastNameController.text.trim(),
-          'role': 'SOLVER',
+          'role': _selectedRole,
           'password': _passwordController.text.trim(),
         };
         final authService = AuthService();

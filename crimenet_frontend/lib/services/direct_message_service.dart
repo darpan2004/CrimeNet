@@ -4,11 +4,17 @@ import 'auth_service.dart';
 import 'dart:convert';
 
 class DirectMessageService {
-  Future<bool> isEligibleForDM(int currentUserId, int otherUserId) async {
+  Future<bool> isEligibleForDM(
+    dynamic currentUserId,
+    dynamic otherUserId,
+  ) async {
+    int user1 =
+        currentUserId is String ? int.parse(currentUserId) : currentUserId;
+    int user2 = otherUserId is String ? int.parse(otherUserId) : otherUserId;
     final token = await AuthService().getToken();
     final response = await http.get(
       Uri.parse(
-        '${AppConstants.baseUrl}/dm/eligible?user1=$currentUserId&user2=$otherUserId',
+        '${AppConstants.baseUrl}/dm/eligible?user1=$user1&user2=$user2',
       ),
       headers: {'Authorization': 'Bearer $token'},
     );

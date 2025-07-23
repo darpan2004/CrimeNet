@@ -50,6 +50,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/cases/public/**").permitAll()
                 .requestMatchers("/api/badges/**").permitAll()
                 .requestMatchers("/error").permitAll()
+                .requestMatchers("/ws/**").permitAll() // 👈 Permit WebSocket handshake
                 .requestMatchers("/api/users/**").authenticated()
                 .anyRequest().authenticated()
             )

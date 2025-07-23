@@ -54,6 +54,14 @@ public class DirectMessageController {
         return ResponseEntity.ok(eligible);
     }
 
+    // Get DMs grouped by case and user
+    @GetMapping("/grouped")
+    public ResponseEntity<?> getGroupedDMsByCase(Authentication authentication) {
+        User user = userRepository.findByUsername(authentication.getName()).orElse(null);
+        if (user == null) return ResponseEntity.badRequest().body("Invalid user");
+        return ResponseEntity.ok(directMessageService.getGroupedDMsByCase(user));
+    }
+
     // DTO for send message
     public static class DMRequest {
         public Long receiverId;

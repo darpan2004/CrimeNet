@@ -9,7 +9,9 @@ import 'dm_chat_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final int? userId;
-  const ProfileScreen({Key? key, this.userId}) : super(key: key);
+  ProfileScreen({Key? key, userId})
+    : userId = userId is String ? int.tryParse(userId) : userId,
+      super(key: key);
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -324,8 +326,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ],
                           );
                         } else {
-                          // Show prominent Send Message button for other users
-                          return _buildChatButton();
+                          // Show ONLY the Send Message button for other users
+                          return _buildChatButton(forceShow: true);
                         }
                       },
                     ),
@@ -416,7 +418,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildChatButton() {
+  Widget _buildChatButton({bool forceShow = false}) {
     if (_user == null) return SizedBox.shrink();
     return FutureBuilder<User?>(
       future: AuthService().getCurrentUser(),
@@ -424,42 +426,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (!snapshot.hasData || snapshot.data == null)
           return SizedBox.shrink();
         final currentUserId = snapshot.data!.id;
-        if (_user!.id == currentUserId) return SizedBox.shrink();
-        return FutureBuilder<bool>(
-          future: DirectMessageService().isEligibleForDM(
-            currentUserId!,
-            _user!.id!,
-          ),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const SizedBox.shrink();
-            }
-            if (snapshot.data == true) {
-              return SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.message),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => DMChatScreen(peerUser: _user!),
-                      ),
-                    );
-                  },
-                  label: const Text('Send Message'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(AppConstants.primaryColor),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+        if (!forceShow && _user!.id == currentUserId) return SizedBox.shrink();
+
+        // Both currentUserId and _user!.id are already integers
+        return SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.message),
+            onPressed: () async {
+              final currentId = currentUserId;
+              final otherId = _user!.id;
+              if (currentId == null || otherId == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Invalid user ID.')),
+                );
+                return;
+              }
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DMChatScreen(peerUser: _user!),
                 ),
               );
-            }
-            return const SizedBox.shrink();
-          },
+            },
+            label: const Text('Send Message'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(AppConstants.primaryColor),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
         );
       },
     );

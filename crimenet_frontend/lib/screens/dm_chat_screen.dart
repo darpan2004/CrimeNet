@@ -12,7 +12,16 @@ import '../services/auth_service.dart';
 
 class DMChatScreen extends StatefulWidget {
   final User peerUser;
-  const DMChatScreen({Key? key, required this.peerUser}) : super(key: key);
+  final int? caseId;
+  final String? caseTitle;
+  final VoidCallback? onMessageSent;
+  const DMChatScreen({
+    Key? key,
+    required this.peerUser,
+    this.caseId,
+    this.caseTitle,
+    this.onMessageSent,
+  }) : super(key: key);
 
   @override
   State<DMChatScreen> createState() => _DMChatScreenState();
@@ -23,6 +32,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
   final TextEditingController _controller = TextEditingController();
   StompClient? stompClient;
   User? currentUser;
+  bool isConnected = false;
 
   @override
   void initState() {
@@ -34,13 +44,15 @@ class _DMChatScreenState extends State<DMChatScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     currentUser = authProvider.user;
     await fetchChatHistory();
-    connectWebSocket();
+    await connectWebSocketWithAuth();
   }
 
   Future<void> fetchChatHistory() async {
     final token = await AuthService().getToken();
     final response = await http.get(
-      Uri.parse('${AppConstants.baseUrl}/dm/chat/${widget.peerUser.id}'),
+      Uri.parse(
+        '${AppConstants.baseUrl}/dm/chat/${widget.peerUser.id}?caseId=${widget.caseId ?? ''}',
+      ),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -50,18 +62,24 @@ class _DMChatScreenState extends State<DMChatScreen> {
     }
   }
 
-  void connectWebSocket() {
+  Future<void> connectWebSocketWithAuth() async {
+    final token = await AuthService().getToken();
     stompClient = StompClient(
       config: StompConfig.SockJS(
         url: '${AppConstants.baseUrl.replaceFirst('/api', '')}/ws',
         onConnect: onConnect,
         onWebSocketError: (dynamic error) => print(error),
+        stompConnectHeaders: {'Authorization': 'Bearer $token'},
+        webSocketConnectHeaders: {'Authorization': 'Bearer $token'},
       ),
     );
     stompClient!.activate();
   }
 
   void onConnect(StompFrame frame) {
+    setState(() {
+      isConnected = true;
+    });
     stompClient!.subscribe(
       destination: '/topic/dm.${currentUser!.id}',
       callback: (frame) {
@@ -81,14 +99,27 @@ class _DMChatScreenState extends State<DMChatScreen> {
   }
 
   void sendMessage() {
-    if (_controller.text.trim().isEmpty || stompClient == null) return;
+    if (_controller.text.trim().isEmpty || stompClient == null || !isConnected)
+      return;
     final msg = {
       'senderId': currentUser!.id,
       'receiverId': widget.peerUser.id,
       'content': _controller.text.trim(),
+      'caseId': widget.caseId,
     };
     stompClient!.send(destination: '/app/dm.send', body: json.encode(msg));
+    setState(() {
+      messages.add({
+        'sender': {'id': currentUser!.id},
+        'receiver': {'id': widget.peerUser.id},
+        'content': _controller.text.trim(),
+        'caseId': widget.caseId,
+      });
+    });
     _controller.clear();
+    if (widget.onMessageSent != null) {
+      widget.onMessageSent!();
+    }
   }
 
   @override
@@ -102,10 +133,20 @@ class _DMChatScreenState extends State<DMChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Chat with ${widget.peerUser.username ?? 'Unknown'}'),
+        title: Text(
+          (widget.caseTitle != null ? '${widget.caseTitle!} - ' : '') +
+              (widget.peerUser.displayName.isNotEmpty
+                  ? widget.peerUser.displayName
+                  : (widget.peerUser.username ?? 'User')),
+        ),
       ),
       body: Column(
         children: [
+          if (!isConnected)
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Center(child: CircularProgressIndicator()),
+            ),
           Expanded(
             child: ListView.builder(
               itemCount: messages.length,
@@ -143,11 +184,12 @@ class _DMChatScreenState extends State<DMChatScreen> {
                     decoration: const InputDecoration(
                       hintText: 'Type a message...',
                     ),
+                    enabled: isConnected,
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.send),
-                  onPressed: sendMessage,
+                  onPressed: isConnected ? sendMessage : null,
                 ),
               ],
             ),

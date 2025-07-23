@@ -1,3 +1,4 @@
+import 'package:crimenet_frontend/screens/hiring_main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -23,9 +24,10 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
-  static const List<Widget> _screens = <Widget>[
+  static List<Widget> _screens = <Widget>[
     CasesScreen(),
     DMInboxScreen(),
+    HiringMainScreen(), // <-- Add this line
     ProfileScreen(),
   ];
 
@@ -42,9 +44,15 @@ class _MainNavigationState extends State<MainNavigation> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+        selectedItemColor: Colors.blue, // or your primary color
+        unselectedItemColor: Colors.grey, // <-- Make sure this is visible!
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.folder), label: 'Cases'),
           BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Chat'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.work),
+            label: 'Hiring',
+          ), // <-- Add this line
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),

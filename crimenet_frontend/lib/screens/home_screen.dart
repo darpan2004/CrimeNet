@@ -3,6 +3,7 @@ import '../constants/app_constants.dart';
 import 'cases_screen.dart';
 import 'profile_screen.dart';
 import 'dashboard_screen.dart';
+import 'hiring_main_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
@@ -15,7 +16,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
-
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
@@ -25,7 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final List<Widget> screens = [
       const DashboardScreen(),
       CasesScreen(user: user),
-      const ProfileScreen(),
+      HiringMainScreen(),
+      ProfileScreen(),
     ];
     return Scaffold(
       backgroundColor: const Color(AppConstants.backgroundColor),
@@ -59,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
               label: 'Dashboard',
             ),
             BottomNavigationBarItem(icon: Icon(Icons.cases), label: 'Cases'),
+            BottomNavigationBarItem(icon: Icon(Icons.work), label: 'Hiring'),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
