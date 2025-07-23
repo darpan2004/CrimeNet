@@ -89,18 +89,6 @@ flutter run
 
 ---
 
-## 🖼️ Screenshots
-
-> _Add your own screenshots here!_
-
-- ![Login Screen](screenshots/login.png)
-- ![Case List](screenshots/cases.png)
-- ![Case Detail](screenshots/case_detail.png)
-- ![Recruiter Dashboard](screenshots/recruiter_dashboard.png)
-- ![Real-Time Chat](screenshots/chat.png)
-
----
-
 ## 💡 Unique Highlights
 
 - **WebSocket Real-Time Chat:** Instant messaging for case collaborators.

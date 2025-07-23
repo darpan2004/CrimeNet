@@ -9,4 +9,11 @@ public class HiringApplicationResponseDTO {
     public String coverLetter;
     public LocalDateTime createdAt;
     public String status;
+
+    // Applicant details for recruiter view
+    public String applicantUsername;
+    public String applicantEmail;
+    public String applicantFirstName;
+    public String applicantLastName;
+    public String applicantRole;
 } 
