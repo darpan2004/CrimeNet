@@ -62,8 +62,8 @@ graph TD
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourusername/crimenet.git
-cd crimenet/app
+git clone https://github.com/darpan2004/CrimeNet.git
+cd crime_sovlver_app
 
 # Configure PostgreSQL in src/main/resources/application.properties
 # (Set DB URL, username, password)
