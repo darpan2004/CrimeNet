@@ -6,7 +6,6 @@ class HiringApplicationDetailScreen extends StatelessWidget {
   final HiringApplication application;
   const HiringApplicationDetailScreen({required this.application, Key? key})
     : super(key: key);
-
   void _openChat(BuildContext context) {
     Navigator.push(
       context,

@@ -1,5 +1,6 @@
 package org.example.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -85,7 +86,10 @@ public class CrimeCaseController {
                 c.getStatus() != null ? c.getStatus().toString() : null,
                 c.getPostedAt() != null ? c.getPostedAt().toString() : null,
                 c.getImageUrl(),
-                c.getMediaUrl()
+                c.getMediaUrl(),
+                c.getTags() != null ? new ArrayList<>(c.getTags()) : new ArrayList<>(),
+                c.getCaseType() != null ? c.getCaseType().toString() : null,
+                c.getDifficulty() != null ? c.getDifficulty().toString() : null
             ))
             .collect(Collectors.toList());
         return ResponseEntity.ok(summaries);
@@ -99,8 +103,12 @@ public class CrimeCaseController {
         private String postedAt;
         private String imageUrl;
         private String mediaUrl;
+        private List<String> tags;
+        private String caseType;
+        private String difficulty;
 
-        public CaseSummary(Long id, String title, String description, String status, String postedAt, String imageUrl, String mediaUrl) {
+        public CaseSummary(Long id, String title, String description, String status, String postedAt, 
+                          String imageUrl, String mediaUrl, List<String> tags, String caseType, String difficulty) {
             this.id = id;
             this.title = title;
             this.description = description;
@@ -108,7 +116,11 @@ public class CrimeCaseController {
             this.postedAt = postedAt;
             this.imageUrl = imageUrl;
             this.mediaUrl = mediaUrl;
+            this.tags = tags;
+            this.caseType = caseType;
+            this.difficulty = difficulty;
         }
+        
         public Long getId() { return id; }
         public String getTitle() { return title; }
         public String getDescription() { return description; }
@@ -116,6 +128,9 @@ public class CrimeCaseController {
         public String getPostedAt() { return postedAt; }
         public String getImageUrl() { return imageUrl; }
         public String getMediaUrl() { return mediaUrl; }
+        public List<String> getTags() { return tags; }
+        public String getCaseType() { return caseType; }
+        public String getDifficulty() { return difficulty; }
     }
 
     @GetMapping("/public")
@@ -149,6 +164,36 @@ public class CrimeCaseController {
     @GetMapping("/search")
     public ResponseEntity<List<CrimeCase>> searchCases(@RequestParam String searchTerm) {
         return ResponseEntity.ok(crimeCaseService.searchByTitleOrDescription(searchTerm));
+    }
+
+    @GetMapping("/tags/{tag}")
+    public ResponseEntity<List<CrimeCase>> getCasesByTag(@PathVariable String tag) {
+        return ResponseEntity.ok(crimeCaseService.findByTag(tag));
+    }
+
+    @GetMapping("/tags")
+    public ResponseEntity<List<String>> getAllTags() {
+        return ResponseEntity.ok(crimeCaseService.getAllTags());
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> getAllCategories() {
+        List<String> categories = new ArrayList<>();
+        for (org.example.entity.CaseCategory category : org.example.entity.CaseCategory.values()) {
+            categories.add(category.getDisplayName());
+        }
+        return ResponseEntity.ok(categories);
+    }
+
+    @GetMapping("/by-expertise")
+    public ResponseEntity<List<CrimeCase>> getCasesByUserExpertise() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        
+        User currentUser = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        return ResponseEntity.ok(crimeCaseService.findByUserExpertise(currentUser));
     }
 
     @PostMapping("/{id}/assign/{solverId}")

@@ -235,6 +235,17 @@ public class CrimeCaseService {
         return crimeCaseRepository.findByTag(tag);
     }
     
+    public List<String> getAllTags() {
+        return crimeCaseRepository.findAllTags();
+    }
+    
+    public List<CrimeCase> findByUserExpertise(User user) {
+        if (user.getExpertiseAreas() == null || user.getExpertiseAreas().isEmpty()) {
+            return crimeCaseRepository.findAll(); // Return all cases if no expertise set
+        }
+        return crimeCaseRepository.findByTagsIn(user.getExpertiseAreas());
+    }
+    
     // Combined filters
     public List<CrimeCase> findByCaseTypeAndDifficulty(CaseType caseType, CaseDifficulty difficulty) {
         return crimeCaseRepository.findByCaseTypeAndDifficulty(caseType, difficulty);

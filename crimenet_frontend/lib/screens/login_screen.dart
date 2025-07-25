@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_constants.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/enhanced_text_field.dart';
+import '../widgets/custom_button.dart';
 import 'register_screen.dart';
 import 'home_screen.dart';
 
@@ -27,76 +29,104 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(AppConstants.backgroundColor),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 60),
-                Icon(
-                  Icons.security,
-                  size: 80,
-                  color: const Color(AppConstants.primaryColor),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Crime Solver',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(AppConstants.primaryColor),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Sign in to your account',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: const Color(AppConstants.textLightColor),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 48),
-
-                // Username Field
-                TextFormField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(
-                    labelText: 'Username',
-                    prefixIcon: const Icon(Icons.person),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 28.0,
+              vertical: 32.0,
+            ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: AppConstants.spacingXl),
+                  // Enhanced avatar with gradient background
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(AppConstants.primaryColor),
+                          Color(AppConstants.secondaryColor),
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(AppConstants.primaryColor).withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
-                    filled: true,
-                    fillColor: Colors.white,
+                    child: const Icon(
+                      Icons.security_rounded,
+                      size: 64,
+                      color: Colors.white,
+                    ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your username';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Password Field
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
+                  const SizedBox(height: AppConstants.spacingLg),
+                  // Enhanced title with gradient text effect
+                  ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [
+                        Color(AppConstants.primaryColor),
+                        Color(AppConstants.secondaryColor),
+                      ],
+                    ).createShader(bounds),
+                    child: Text(
+                      'CrimeNet',
+                      style: theme.textTheme.displayMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: AppConstants.spacingSm),
+                  Text(
+                    'Secure Crime Collaboration Platform',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Color(AppConstants.textLightColor),
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppConstants.spacing2Xl),
+                  // Enhanced Username Field
+                  EnhancedTextField(
+                    controller: _usernameController,
+                    labelText: 'Username',
+                    hintText: 'Enter your username',
+                    prefixIcon: Icons.person_rounded,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your username';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppConstants.spacingMd),
+                  // Enhanced Password Field
+                  EnhancedTextField(
+                    controller: _passwordController,
                     labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock),
+                    hintText: 'Enter your password',
+                    obscureText: _obscurePassword,
+                    prefixIcon: Icons.lock_rounded,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                            ? Icons.visibility_rounded
+                            : Icons.visibility_off_rounded,
                       ),
                       onPressed: () {
                         setState(() {
@@ -104,104 +134,105 @@ class _LoginScreenState extends State<LoginScreen> {
                         });
                       },
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your password';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // Login Button
-                Consumer<AuthProvider>(
-                  builder: (context, authProvider, child) {
-                    return ElevatedButton(
-                      onPressed: authProvider.isLoading ? null : _handleLogin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(AppConstants.primaryColor),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child:
-                          authProvider.isLoading
-                              ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                              : const Text(
-                                'Sign In',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                  const SizedBox(height: AppConstants.spacingLg),
+                  // Enhanced Login Button
+                  Consumer<AuthProvider>(
+                    builder: (context, authProvider, child) {
+                      return CustomButton(
+                        text: 'Sign In',
+                        onPressed: authProvider.isLoading ? null : _handleLogin,
+                        isLoading: authProvider.isLoading,
+                        icon: Icons.login_rounded,
+                        type: ButtonType.primary,
+                        size: ButtonSize.large,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppConstants.spacingMd),
+                  // Enhanced Error Message
+                  Consumer<AuthProvider>(
+                    builder: (context, authProvider, child) {
+                      if (authProvider.error != null) {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: AppConstants.spacingSm),
+                          padding: const EdgeInsets.all(AppConstants.spacingMd),
+                          decoration: BoxDecoration(
+                            color: Color(AppConstants.errorColor).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+                            border: Border.all(
+                              color: Color(AppConstants.errorColor).withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline_rounded,
+                                color: Color(AppConstants.errorColor),
+                                size: 20,
+                              ),
+                              const SizedBox(width: AppConstants.spacingSm),
+                              Expanded(
+                                child: Text(
+                                  authProvider.error!,
+                                  style: TextStyle(
+                                    color: Color(AppConstants.errorColor),
+                                    fontSize: 14,
+                                  ),
                                 ),
                               ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Error Message
-                Consumer<AuthProvider>(
-                  builder: (context, authProvider, child) {
-                    if (authProvider.error != null) {
-                      return Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.red.shade200),
-                        ),
-                        child: Text(
-                          authProvider.error!,
-                          style: TextStyle(color: Colors.red.shade700),
-                          textAlign: TextAlign.center,
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // Register Link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Don't have an account? ",
-                      style: TextStyle(
-                        color: const Color(AppConstants.textLightColor),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const RegisterScreen(),
+                            ],
                           ),
                         );
-                      },
-                      child: Text(
-                        'Sign Up',
-                        style: TextStyle(
-                          color: const Color(AppConstants.primaryColor),
-                          fontWeight: FontWeight.w600,
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                  const SizedBox(height: AppConstants.spacingMd),
+                  // Enhanced Register Link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Don't have an account? ",
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Color(AppConstants.textLightColor),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const RegisterScreen(),
+                            ),
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Color(AppConstants.primaryColor),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.spacingSm,
+                          ),
+                        ),
+                        child: Text(
+                          'Sign Up',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: Color(AppConstants.primaryColor),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

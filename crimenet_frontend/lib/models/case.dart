@@ -6,6 +6,9 @@ class Case {
   final String? postedAt;
   final String? imageUrl;
   final String? mediaUrl;
+  final List<String> tags;
+  final String? caseType;
+  final String? difficulty;
 
   Case({
     required this.id,
@@ -15,6 +18,9 @@ class Case {
     this.postedAt,
     this.imageUrl,
     this.mediaUrl,
+    this.tags = const [],
+    this.caseType,
+    this.difficulty,
   });
 
   factory Case.fromJson(Map<String, dynamic> json) {
@@ -26,6 +32,24 @@ class Case {
       postedAt: json['postedAt'],
       imageUrl: json['imageUrl'],
       mediaUrl: json['mediaUrl'],
+      tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
+      caseType: json['caseType'],
+      difficulty: json['difficulty'],
     );
+  }
+  
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'status': status,
+      'postedAt': postedAt,
+      'imageUrl': imageUrl,
+      'mediaUrl': mediaUrl,
+      'tags': tags,
+      'caseType': caseType,
+      'difficulty': difficulty,
+    };
   }
 }

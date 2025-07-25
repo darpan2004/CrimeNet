@@ -70,6 +70,14 @@ public interface CrimeCaseRepository extends JpaRepository<CrimeCase, Long> {
     @Query("SELECT c FROM CrimeCase c JOIN c.tags t WHERE t = :tag")
     List<CrimeCase> findByTag(@Param("tag") String tag);
     
+    // Find all unique tags
+    @Query("SELECT DISTINCT t FROM CrimeCase c JOIN c.tags t ORDER BY t")
+    List<String> findAllTags();
+    
+    // Find cases by multiple tags (matching user expertise)
+    @Query("SELECT DISTINCT c FROM CrimeCase c JOIN c.tags t WHERE t IN :tags")
+    List<CrimeCase> findByTagsIn(@Param("tags") java.util.Set<String> tags);
+    
     // Find recent cases
     @Query("SELECT c FROM CrimeCase c ORDER BY c.postedAt DESC")
     Page<CrimeCase> findRecentCases(Pageable pageable);

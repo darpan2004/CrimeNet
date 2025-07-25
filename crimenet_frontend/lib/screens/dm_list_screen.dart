@@ -58,13 +58,21 @@ class _DMInboxScreenState extends State<DMInboxScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('DM Inbox')),
       body:
           isLoading
               ? const Center(child: CircularProgressIndicator())
               : groupedDMs.isEmpty
-              ? const Center(child: Text('No conversations yet'))
+              ? Center(
+                child: Text(
+                  'No conversations yet',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+              )
               : ListView.builder(
                 itemCount: groupedDMs.length,
                 itemBuilder: (context, caseIdx) {
@@ -73,40 +81,83 @@ class _DMInboxScreenState extends State<DMInboxScreen> {
                   final caseTitle = caseMap['caseTitle'] ?? 'Unknown Case';
                   final users = caseMap['users'] as List<dynamic>;
                   final isExpanded = expandedCases[caseId] ?? false;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ListTile(
-                        title: Text(
-                          caseTitle,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                  return Card(
+                    color: theme.cardColor,
+                    margin: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ListTile(
+                          title: Text(
+                            caseTitle,
+                            style: theme.textTheme.titleLarge,
+                          ),
+                          trailing: Icon(
+                            isExpanded ? Icons.expand_less : Icons.expand_more,
+                            color: theme.colorScheme.primary,
+                          ),
+                          onTap: () {
+                            setState(() {
+                              expandedCases[caseId] = !isExpanded;
+                            });
+                          },
                         ),
-                        trailing: Icon(
-                          isExpanded ? Icons.expand_less : Icons.expand_more,
-                        ),
-                        onTap: () {
-                          setState(() {
-                            expandedCases[caseId] = !isExpanded;
-                          });
-                        },
-                      ),
-                      if (isExpanded)
-                        ...users
-                            .where(
-                              (user) => (user['messages'] as List).isNotEmpty,
-                            )
-                            .map(
-                              (user) => ListTile(
-                                leading: const Icon(Icons.person),
-                                title: Text(user['userName'] ?? 'Unknown'),
-                                subtitle: Text(
-                                  '${(user['messages'] as List).length} messages',
+                        if (isExpanded)
+                          ...users
+                              .where(
+                                (user) => (user['messages'] as List).isNotEmpty,
+                              )
+                              .map(
+                                (user) => ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor: theme.colorScheme.primary
+                                        .withOpacity(0.15),
+                                    child: const Icon(
+                                      Icons.person,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    user['userName'] ?? 'Unknown',
+                                    style: theme.textTheme.labelLarge,
+                                  ),
+                                  subtitle: Text(
+                                    '${(user['messages'] as List).length} messages',
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                  onTap: () => _navigateToChat(user, caseMap),
                                 ),
-                                onTap: () => _navigateToChat(user, caseMap),
+                              ),
+                        if (isExpanded &&
+                            users
+                                .where(
+                                  (user) =>
+                                      (user['messages'] as List).isNotEmpty,
+                                )
+                                .isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: Text(
+                              'No messages in this case',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurface.withOpacity(
+                                  0.6,
+                                ),
                               ),
                             ),
-                      const Divider(),
-                    ],
+                          ),
+                      ],
+                    ),
                   );
                 },
               ),

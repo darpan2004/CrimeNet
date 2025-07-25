@@ -1,6 +1,7 @@
 package org.example.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.example.entity.User;
 import org.example.service.UserService;
@@ -41,6 +42,25 @@ public class UserController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<User> updateProfile(@RequestBody User user) {
         return ResponseEntity.ok(userService.updateUser(user));
+    }
+
+    @PutMapping("/expertise")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<User> updateExpertise(@RequestBody Map<String, Object> request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        
+        User currentUser = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        @SuppressWarnings("unchecked")
+        List<String> expertiseList = (List<String>) request.get("expertise");
+        if (expertiseList != null) {
+            currentUser.getExpertiseAreas().clear();
+            currentUser.getExpertiseAreas().addAll(expertiseList);
+        }
+        
+        return ResponseEntity.ok(userService.updateUser(currentUser));
     }
 
     @GetMapping("/{id}")

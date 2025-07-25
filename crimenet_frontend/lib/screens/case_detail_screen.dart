@@ -79,32 +79,10 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
     }
   }
 
-  Widget _buildCommentItem(Comment comment) {
-    return GestureDetector(
-      onTap: () {
-        print(
-          'Navigating to profile of userId: ${comment.userId}, author: ${comment.author}',
-        );
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ProfileScreen(userId: comment.userId),
-          ),
-        );
-      },
-      child: Card(
-        child: ListTile(
-          leading: const Icon(Icons.person),
-          title: Text(comment.author.isNotEmpty ? comment.author : 'Unknown'),
-          subtitle: Text(comment.content),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final c = widget.caseItem;
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Case Details')),
       body: SingleChildScrollView(
@@ -114,43 +92,103 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
           children: [
             Text(
               c.title,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: theme.textTheme.displayLarge?.copyWith(fontSize: 26),
             ),
             const SizedBox(height: 8),
-            Text('Status: ${c.status}', style: const TextStyle(fontSize: 16)),
-            if (c.postedAt != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                'Posted at: ${c.postedAt}',
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    c.status,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+                if (c.postedAt != null) ...[
+                  const SizedBox(width: 16),
+                  Icon(
+                    Icons.access_time,
+                    size: 18,
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    c.postedAt!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (c.imageUrl != null && c.imageUrl!.isNotEmpty)
+              Card(
+                margin: EdgeInsets.zero,
+                clipBehavior: Clip.antiAlias,
+                child: Image.network(
+                  c.imageUrl!,
+                  height: 220,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder:
+                      (context, error, stack) => Container(
+                        height: 220,
+                        color: theme.colorScheme.surface,
+                        child: Icon(
+                          Icons.broken_image,
+                          size: 48,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                ),
+              ),
+            if (c.mediaUrl != null && c.mediaUrl!.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Card(
+                margin: EdgeInsets.zero,
+                clipBehavior: Clip.antiAlias,
+                child:
+                    _videoController != null && _videoInitialized
+                        ? AspectRatio(
+                          aspectRatio: _videoController!.value.aspectRatio,
+                          child: VideoPlayer(_videoController!),
+                        )
+                        : _videoController != null
+                        ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                        : Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            'Media: ${c.mediaUrl}',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
               ),
             ],
             const SizedBox(height: 16),
-            if (c.imageUrl != null)
-              Image.network(c.imageUrl!, height: 200, fit: BoxFit.cover),
-            if (c.mediaUrl != null) ...[
-              const SizedBox(height: 8),
-              if (_videoController != null && _videoInitialized)
-                AspectRatio(
-                  aspectRatio: _videoController!.value.aspectRatio,
-                  child: VideoPlayer(_videoController!),
-                )
-              else if (_videoController != null)
-                const Center(child: CircularProgressIndicator())
-              else
-                Text(
-                  'Media: ${c.mediaUrl}',
-                  style: const TextStyle(fontSize: 14, color: Colors.blue),
-                ),
-            ],
-            const SizedBox(height: 16),
-            Text(c.description, style: const TextStyle(fontSize: 16)),
+            Text(
+              c.description,
+              style: theme.textTheme.bodyMedium?.copyWith(fontSize: 17),
+            ),
             const SizedBox(height: 24),
             const Divider(),
-            const Text(
-              'Comments',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            Text('Comments', style: theme.textTheme.titleLarge),
             const SizedBox(height: 8),
             FutureBuilder<List<Comment>>(
               future: _commentsFuture,
@@ -159,13 +197,15 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return Text(
-                    'Error loading comments: ${snapshot.error}',
+                    'Error loading comments: \\${snapshot.error}',
                     style: const TextStyle(color: Colors.red),
                   );
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Text(
+                  return Text(
                     'No comments yet.',
-                    style: TextStyle(color: Colors.grey),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    ),
                   );
                 }
                 final comments = snapshot.data!;
@@ -174,20 +214,23 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                 );
               },
             ),
-
             const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _commentController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Add a comment...',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 8,
                       ),
+                      filled: true,
+                      fillColor: theme.cardColor,
                     ),
                     minLines: 1,
                     maxLines: 3,
@@ -195,20 +238,63 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                ElevatedButton(
+                FilledButton(
                   onPressed: _isPosting ? null : _postComment,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                   child:
                       _isPosting
                           ? const SizedBox(
                             width: 16,
                             height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
                           : const Text('Post'),
                 ),
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCommentItem(Comment comment) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProfileScreen(userId: comment.userId),
+          ),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        elevation: 1,
+        child: ListTile(
+          leading: CircleAvatar(
+            backgroundColor: theme.colorScheme.primary.withOpacity(0.15),
+            child: const Icon(Icons.person, color: Colors.white),
+          ),
+          title: Text(
+            comment.author.isNotEmpty ? comment.author : 'Unknown',
+            style: theme.textTheme.labelLarge,
+          ),
+          subtitle: Text(comment.content, style: theme.textTheme.bodyMedium),
         ),
       ),
     );

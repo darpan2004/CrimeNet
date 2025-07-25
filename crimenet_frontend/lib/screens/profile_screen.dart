@@ -72,8 +72,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(AppConstants.backgroundColor),
       appBar: AppBar(
         title: const Text('Profile'),
         backgroundColor: Colors.transparent,
@@ -83,7 +83,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             future: AuthService().getCurrentUser(),
             builder: (context, snapshot) {
               if (!snapshot.hasData || snapshot.data == null || _user == null)
-                return SizedBox.shrink();
+                return const SizedBox.shrink();
               final currentUserId = snapshot.data!.id;
               if (_user!.id == currentUserId) {
                 return IconButton(
@@ -98,7 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
                 );
               }
-              return SizedBox.shrink();
+              return const SizedBox.shrink();
             },
           ),
         ],
@@ -107,7 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _error != null
-              ? Center(child: Text('Error: \\$_error'))
+              ? Center(child: Text('Error: $_error'))
               : _user == null
               ? const Center(child: Text('No user data'))
               : SingleChildScrollView(
@@ -115,77 +115,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   children: [
                     // Profile Header
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
+                    Card(
+                      color: theme.cardColor,
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
                       ),
-                      child: Column(
-                        children: [
-                          CircleAvatar(
-                            radius: 50,
-                            backgroundColor: const Color(
-                              AppConstants.primaryColor,
-                            ),
-                            child: const Icon(
-                              Icons.person,
-                              size: 50,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            _user!.displayName,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _user!.bio ?? 'No bio',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: const Color(AppConstants.textLightColor),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _buildStatItem(
-                                'Cases Solved',
-                                _user!.solvedCasesCount.toString(),
+                      elevation: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 50,
+                              backgroundColor: theme.colorScheme.primary
+                                  .withOpacity(0.15),
+                              child: const Icon(
+                                Icons.person,
+                                size: 50,
+                                color: Colors.white,
                               ),
-                              _buildStatItem(
-                                'Rating',
-                                _user!.averageRating.toStringAsFixed(1),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _user!.displayName,
+                              style: theme.textTheme.displayLarge?.copyWith(
+                                fontSize: 24,
                               ),
-                              _buildStatItem(
-                                'Badges',
-                                _user!.badges.length.toString(),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _user!.bio?.isNotEmpty == true
+                                  ? _user!.bio!
+                                  : 'No bio',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurface.withOpacity(
+                                  0.7,
+                                ),
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _buildStatItem(
+                                  'Cases Solved',
+                                  _user!.solvedCasesCount.toString(),
+                                  theme,
+                                ),
+                                _buildStatItem(
+                                  'Rating',
+                                  _user!.averageRating.toStringAsFixed(1),
+                                  theme,
+                                ),
+                                _buildStatItem(
+                                  'Badges',
+                                  _user!.badges.length.toString(),
+                                  theme,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
-
                     // Profile Sections
                     _buildSection('Personal Information', [
                       _buildProfileItem(
                         Icons.email,
                         'Email',
                         _user!.email ?? 'Not provided',
+                        theme,
                       ),
                       if (_user!.phoneNumber != null &&
                           _user!.phoneNumber!.isNotEmpty)
@@ -193,6 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Icons.phone,
                           'Phone',
                           _user!.phoneNumber!,
+                          theme,
                         ),
                       if (_user!.location != null &&
                           _user!.location!.isNotEmpty)
@@ -200,6 +201,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Icons.location_on,
                           'Location',
                           _user!.location!,
+                          theme,
                         ),
                       if (_user!.experience != null &&
                           _user!.experience!.isNotEmpty)
@@ -207,16 +209,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Icons.work,
                           'Experience',
                           _user!.experience!,
+                          theme,
                         ),
-                    ]),
+                    ], theme),
                     const SizedBox(height: 16),
-
                     _buildSection('Expertise', [
                       if (_user!.specializationsList.isNotEmpty)
                         _buildProfileItem(
                           Icons.security,
                           'Specialization',
                           _user!.specializationsList.join(', '),
+                          theme,
                         ),
                       if (_user!.certifications != null &&
                           _user!.certifications!.isNotEmpty)
@@ -224,37 +227,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Icons.school,
                           'Certifications',
                           _user!.certifications!,
+                          theme,
                         ),
-                      if (_user!.expertise != null)
+                      if (_user!.expertise != null &&
+                          _user!.expertise!.isNotEmpty)
                         _buildProfileItem(
                           Icons.star,
                           'Skills',
                           _user!.expertise!,
+                          theme,
                         ),
-                    ]),
+                    ], theme),
                     const SizedBox(height: 16),
-
                     _buildSection('Account', [
-                      _buildProfileItem(
-                        Icons.notifications,
-                        'Notifications',
-                        'Enabled',
-                      ),
                       _buildProfileItem(
                         Icons.privacy_tip,
                         'Privacy',
-                        'Public Profile',
+                        _user!.role,
+                        theme,
                       ),
-                      _buildProfileItem(Icons.language, 'Language', 'English'),
-                    ]),
+                      _buildProfileItem(
+                        Icons.language,
+                        'Language',
+                        'English',
+                        theme,
+                      ),
+                      if (_user!.createdAt != null)
+                        _buildProfileItem(
+                          Icons.calendar_today,
+                          'Joined',
+                          _user!.createdAt!.toLocal().toString().split(' ')[0],
+                          theme,
+                        ),
+                    ], theme),
                     const SizedBox(height: 24),
-
                     // Action Buttons
                     FutureBuilder<User?>(
                       future: AuthService().getCurrentUser(),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData || snapshot.data == null) {
-                          return SizedBox.shrink();
+                          return const SizedBox.shrink();
                         }
                         final currentUserId = snapshot.data!.id;
                         if (_user!.id == currentUserId) {
@@ -262,12 +274,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               SizedBox(
                                 width: double.infinity,
-                                child: ElevatedButton(
+                                child: FilledButton(
                                   onPressed: () {},
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(
-                                      AppConstants.primaryColor,
-                                    ),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: theme.colorScheme.primary,
+                                    foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 16,
                                     ),
@@ -275,14 +286,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  child: const Text(
-                                    'Edit Profile',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
+                                  child: const Text('Edit Profile'),
                                 ),
                               ),
                               const SizedBox(height: 12),
@@ -300,9 +304,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   },
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide(
-                                      color: const Color(
-                                        AppConstants.accentColor,
-                                      ),
+                                      color: theme.colorScheme.primary,
                                     ),
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 16,
@@ -313,12 +315,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                   child: Text(
                                     'Logout',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(
-                                        AppConstants.accentColor,
-                                      ),
+                                    style: theme.textTheme.labelLarge?.copyWith(
+                                      color: theme.colorScheme.primary,
                                     ),
                                   ),
                                 ),
@@ -327,7 +325,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           );
                         } else {
                           // Show ONLY the Send Message button for other users
-                          return _buildChatButton(forceShow: true);
+                          return _buildChatButton(
+                            forceShow: true,
+                            theme: theme,
+                          );
                         }
                       },
                     ),
@@ -338,46 +339,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, String value) {
+  Widget _buildStatItem(String label, String value, ThemeData theme) {
     return Column(
       children: [
-        Text(
-          value,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
+        Text(value, style: theme.textTheme.titleLarge),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: const Color(AppConstants.textLightColor),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSection(String title, List<Widget> children) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+  Widget _buildSection(String title, List<Widget> children, ThemeData theme) {
+    return Card(
+      color: theme.cardColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            child: Text(title, style: theme.textTheme.titleLarge),
           ),
           ...children,
         ],
@@ -385,12 +371,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileItem(IconData icon, String label, String value) {
+  Widget _buildProfileItem(
+    IconData icon,
+    String label,
+    String value,
+    ThemeData theme,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          Icon(icon, color: const Color(AppConstants.primaryColor), size: 20),
+          Icon(icon, color: theme.colorScheme.primary, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -398,18 +389,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: const Color(AppConstants.textLightColor),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text(value, style: theme.textTheme.bodyMedium),
               ],
             ),
           ),
@@ -418,20 +402,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildChatButton({bool forceShow = false}) {
-    if (_user == null) return SizedBox.shrink();
+  Widget _buildChatButton({bool forceShow = false, required ThemeData theme}) {
+    if (_user == null) return const SizedBox.shrink();
     return FutureBuilder<User?>(
       future: AuthService().getCurrentUser(),
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data == null)
-          return SizedBox.shrink();
+          return const SizedBox.shrink();
         final currentUserId = snapshot.data!.id;
-        if (!forceShow && _user!.id == currentUserId) return SizedBox.shrink();
-
-        // Both currentUserId and _user!.id are already integers
+        if (!forceShow && _user!.id == currentUserId)
+          return const SizedBox.shrink();
         return SizedBox(
           width: double.infinity,
-          child: ElevatedButton.icon(
+          child: FilledButton.icon(
             icon: const Icon(Icons.message),
             onPressed: () async {
               final currentId = currentUserId;
@@ -450,8 +433,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             },
             label: const Text('Send Message'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(AppConstants.primaryColor),
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
