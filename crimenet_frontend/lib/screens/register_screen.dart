@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
+import '../widgets/enhanced_text_field.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/multi_select_chips.dart';
+import '../services/auth_service.dart';
 import 'login_screen.dart';
-// Added import for User model
-import '../services/auth_service.dart'; // Added import for AuthService
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -19,8 +21,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
   String _selectedRole = 'SOLVER';
+  List<String> _selectedExpertise = [];
   final List<String> roles = ['SOLVER', 'ORGANIZATION', 'ADMIN', 'RECRUITER'];
+  
+  // Available expertise areas matching backend categories
+  final List<String> _availableExpertise = [
+    'Theft',
+    'Fraud',
+    'Cybercrime',
+    'Assault',
+    'Robbery',
+    'Murder',
+    'Drug Offense',
+    'Burglary',
+    'Vandalism',
+    'Kidnapping',
+    'Domestic Violence',
+    'White Collar Crime',
+    'Identity Theft',
+    'Money Laundering',
+    'Human Trafficking',
+    'Terrorism',
+    'Corruption',
+    'Tax Evasion',
+    'Counterfeiting',
+    'Intellectual Property',
+    'Environmental Crime',
+    'Organized Crime',
+    'Sexual Offense',
+    'Child Abuse',
+    'Elder Abuse',
+    'Missing Person',
+    'Cold Case',
+    'Digital Forensics',
+    'Financial Investigation',
+    'Forensic Accounting',
+  ];
 
   @override
   void dispose() {
@@ -73,12 +111,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 28),
                   // First Name Field
-                  TextFormField(
+                  EnhancedTextField(
                     controller: _firstNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'First Name',
-                      prefixIcon: Icon(Icons.person_outline),
-                    ),
+                    labelText: 'First Name',
+                    hintText: 'Enter your first name',
+                    prefixIcon: Icons.person_outline_rounded,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your first name';
@@ -86,14 +123,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppConstants.spacingMd),
+                  
                   // Last Name Field
-                  TextFormField(
+                  EnhancedTextField(
                     controller: _lastNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Last Name',
-                      prefixIcon: Icon(Icons.person_outline),
-                    ),
+                    labelText: 'Last Name',
+                    hintText: 'Enter your last name',
+                    prefixIcon: Icons.person_outline_rounded,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your last name';
@@ -101,14 +138,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppConstants.spacingMd),
+                  
                   // Username Field
-                  TextFormField(
+                  EnhancedTextField(
                     controller: _usernameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Username',
-                      prefixIcon: Icon(Icons.person),
-                    ),
+                    labelText: 'Username',
+                    hintText: 'Choose a unique username',
+                    prefixIcon: Icons.alternate_email_rounded,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a username';
@@ -119,47 +156,45 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppConstants.spacingMd),
+                  
                   // Email Field
-                  TextFormField(
+                  EnhancedTextField(
                     controller: _emailController,
+                    labelText: 'Email Address',
+                    hintText: 'Enter your email address',
+                    prefixIcon: Icons.email_rounded,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email),
-                    ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
                       }
-                      if (!RegExp(
-                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4} 24',
-                      ).hasMatch(value)) {
+                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
                         return 'Please enter a valid email';
                       }
                       return null;
                     },
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppConstants.spacingMd),
+                  
                   // Password Field
-                  TextFormField(
+                  EnhancedTextField(
                     controller: _passwordController,
+                    labelText: 'Password',
+                    hintText: 'Create a secure password',
+                    prefixIcon: Icons.lock_rounded,
                     obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_rounded
+                            : Icons.visibility_off_rounded,
                       ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -171,45 +206,118 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: AppConstants.spacingLg),
+                  
                   // Role Selection
-                  DropdownButtonFormField<String>(
-                    value: _selectedRole,
-                    items:
-                        roles
-                            .map(
-                              (role) => DropdownMenuItem(
-                                value: role,
-                                child: Text(role),
-                              ),
-                            )
-                            .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedRole = value!;
-                      });
-                    },
-                    decoration: const InputDecoration(
-                      labelText: 'Role',
-                      prefixIcon: Icon(Icons.verified_user),
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    dropdownColor: theme.cardColor,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 28),
-                  // Register Button
-                  FilledButton(
-                    onPressed: _handleRegister,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Color(AppConstants.surfaceColor),
+                      borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+                      border: Border.all(
+                        color: Color(AppConstants.textLightColor).withOpacity(0.3),
                       ),
                     ),
-                    child: const Text('Create Account'),
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedRole,
+                      items: roles.map((role) {
+                        IconData roleIcon;
+                        String roleDescription;
+                        switch (role) {
+                          case 'SOLVER':
+                            roleIcon = Icons.psychology_rounded;
+                            roleDescription = 'Help solve cases and collaborate';
+                            break;
+                          case 'ORGANIZATION':
+                            roleIcon = Icons.business_rounded;
+                            roleDescription = 'Post cases and seek help';
+                            break;
+                          case 'ADMIN':
+                            roleIcon = Icons.admin_panel_settings_rounded;
+                            roleDescription = 'System administration';
+                            break;
+                          case 'RECRUITER':
+                            roleIcon = Icons.people_rounded;
+                            roleDescription = 'Recruit talent for cases';
+                            break;
+                          default:
+                            roleIcon = Icons.person_rounded;
+                            roleDescription = '';
+                        }
+                        return DropdownMenuItem(
+                          value: role,
+                          child: Row(
+                            children: [
+                              Icon(roleIcon, size: 20),
+                              const SizedBox(width: AppConstants.spacingSm),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    role.replaceAll('_', ' '),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  if (roleDescription.isNotEmpty)
+                                    Text(
+                                      roleDescription,
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: Color(AppConstants.textLightColor),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedRole = value!;
+                          _selectedExpertise.clear(); // Clear expertise when role changes
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Select Your Role',
+                        prefixIcon: Icon(Icons.verified_user_rounded),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: AppConstants.spacingMd,
+                          vertical: AppConstants.spacingSm,
+                        ),
+                      ),
+                      borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+                      dropdownColor: Color(AppConstants.surfaceColor),
+                      style: theme.textTheme.bodyMedium,
+                      isExpanded: true,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  // Expertise Selection (show only for SOLVER role)
+                  if (_selectedRole == 'SOLVER') ...[
+                    MultiSelectChips(
+                      title: 'Areas of Expertise',
+                      hint: 'Select your areas of expertise (optional)',
+                      options: _availableExpertise,
+                      selectedOptions: _selectedExpertise,
+                      maxSelections: 5,
+                      onChanged: (selected) {
+                        setState(() {
+                          _selectedExpertise = selected;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: AppConstants.spacingLg),
+                  ],
+                  // Register Button
+                  CustomButton(
+                    text: 'Create Account',
+                    onPressed: _isLoading ? null : _handleRegister,
+                    isLoading: _isLoading,
+                    icon: Icons.person_add_rounded,
+                    type: ButtonType.primary,
+                    size: ButtonSize.large,
                   ),
                   const SizedBox(height: 18),
                   // Login Link
@@ -250,39 +358,57 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _handleRegister() async {
-    if (_formKey.currentState!.validate()) {
-      FocusScope.of(context).unfocus();
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
+    if (!_formKey.currentState!.validate()) return;
+    
+    FocusScope.of(context).unfocus();
+    setState(() => _isLoading = true);
+    
+    try {
+      final userJson = {
+        'username': _usernameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'firstName': _firstNameController.text.trim(),
+        'lastName': _lastNameController.text.trim(),
+        'role': _selectedRole,
+        'password': _passwordController.text.trim(),
+        'expertiseAreas': _selectedExpertise,
+      };
+      
+      // Debug logging for registration data
+      print('=== REGISTRATION DEBUG ===');
+      print('Registration Data: $userJson');
+      print('Selected Expertise: $_selectedExpertise');
+      print('Selected Expertise Length: ${_selectedExpertise.length}');
+      print('=========================');
+      
+      final authService = AuthService();
+      await authService.register(userJson);
+      
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Registration successful! Please log in.'),
+          backgroundColor: Color(AppConstants.successColor),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
-      try {
-        final userJson = {
-          'username': _usernameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'firstName': _firstNameController.text.trim(),
-          'lastName': _lastNameController.text.trim(),
-          'role': _selectedRole,
-          'password': _passwordController.text.trim(),
-        };
-        final authService = AuthService();
-        await authService.register(userJson);
-        Navigator.of(context).pop(); // Remove loading
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration successful! Please log in.'),
-          ),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
-      } catch (e) {
-        Navigator.of(context).pop(); // Remove loading
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Registration failed: \\${e.toString()}')),
-        );
+      
+      // Navigate to login screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Registration failed: ${e.toString()}'),
+          backgroundColor: const Color(AppConstants.errorColor),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }

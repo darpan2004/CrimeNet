@@ -5,7 +5,7 @@ import '../providers/auth_provider.dart';
 import '../widgets/enhanced_text_field.dart';
 import '../widgets/custom_button.dart';
 import 'register_screen.dart';
-import 'home_screen.dart';
+import '../main.dart'; // Import MainNavigation instead of HomeScreen
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -251,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (authProvider.isLoggedIn && mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const MainNavigation()),
         );
       }
     }

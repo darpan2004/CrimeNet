@@ -1,5 +1,9 @@
 package org.example.repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.example.entity.Badge;
 import org.example.entity.BadgeAward;
 import org.example.entity.CrimeCase;
@@ -9,10 +13,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
 @Repository
 public interface BadgeAwardRepository extends JpaRepository<BadgeAward, Long> {
     
@@ -20,6 +20,7 @@ public interface BadgeAwardRepository extends JpaRepository<BadgeAward, Long> {
     List<BadgeAward> findByUser(User user);
     List<BadgeAward> findByBadge(Badge badge);
     List<BadgeAward> findByAwardedBy(User awardedBy);
+    List<BadgeAward> findByAwardedByOrderByAwardedAtDesc(User awardedBy);
     List<BadgeAward> findByCrimeCase(CrimeCase crimeCase);
     
     // Find specific award

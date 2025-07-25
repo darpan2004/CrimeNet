@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/case.dart';
 import '../models/comment.dart';
 import '../services/auth_service.dart';
+import '../widgets/case_tags_display.dart';
+import '../constants/app_constants.dart';
 import 'package:video_player/video_player.dart';
 import '../screens/profile_screen.dart'; // Added import for ProfileScreen
 
@@ -130,6 +132,15 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                 ],
               ],
             ),
+            const SizedBox(height: 16),
+            // Tags display
+            if (c.tags.isNotEmpty) ...[
+              CaseTagsDisplay(
+                tags: c.tags,
+                maxVisible: 5,
+              ),
+              const SizedBox(height: 16),
+            ],
             const SizedBox(height: 16),
             if (c.imageUrl != null && c.imageUrl!.isNotEmpty)
               Card(

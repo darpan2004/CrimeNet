@@ -1,15 +1,21 @@
 package org.example.service;
 
-import org.example.entity.*;
-import org.example.repository.BadgeRepository;
-import org.example.repository.BadgeAwardRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import org.example.entity.Badge;
+import org.example.entity.BadgeAward;
+import org.example.entity.BadgeTier;
+import org.example.entity.BadgeType;
+import org.example.entity.CrimeCase;
+import org.example.entity.User;
+import org.example.entity.UserRole;
+import org.example.repository.BadgeAwardRepository;
+import org.example.repository.BadgeRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
@@ -335,6 +341,116 @@ public class BadgeService {
         double percentage = requiredProgress > 0 ? (double) currentProgress / requiredProgress * 100 : 0;
         
         return new BadgeProgress(badge, currentProgress, requiredProgress, percentage);
+    }
+    
+    // Award badge manually (for RECRUITERS and ORGANIZATIONS)
+    public BadgeAward awardBadgeManually(Long awarderId, Long userId, Long badgeId, 
+                                       String reason, Long caseId) throws Exception {
+        
+        // Validate awarder
+        User awarder = userService.findById(awarderId)
+            .orElseThrow(() -> new Exception("Awarder not found"));
+        
+        // Check if awarder has permission to award badges
+        if (awarder.getRole() != UserRole.RECRUITER && awarder.getRole() != UserRole.ORGANIZATION) {
+            throw new Exception("Only recruiters and organizations can award badges manually");
+        }
+        
+        // Validate user to receive badge
+        User user = userService.findById(userId)
+            .orElseThrow(() -> new Exception("User not found"));
+        
+        // Validate badge
+        Badge badge = badgeRepository.findById(badgeId)
+            .orElseThrow(() -> new Exception("Badge not found"));
+        
+        // Prevent self-awarding
+        if (awarderId.equals(userId)) {
+            throw new Exception("Users cannot award badges to themselves");
+        }
+        
+        // Check if user already has this badge
+        Optional<BadgeAward> existingAward = badgeAwardRepository.findByUserAndBadge(user, badge);
+        if (existingAward.isPresent()) {
+            throw new Exception("User already has this badge");
+        }
+        
+        return awardBadge(user, badge, awarder, reason, caseId);
+    }
+    
+    // Revoke a badge (only by the original awarder or admin)
+    public void revokeBadge(Long badgeAwardId, Long requesterId) throws Exception {
+        BadgeAward badgeAward = badgeAwardRepository.findById(badgeAwardId)
+            .orElseThrow(() -> new Exception("Badge award not found"));
+        
+        User requester = userService.findById(requesterId)
+            .orElseThrow(() -> new Exception("Requester not found"));
+        
+        // Only the original awarder or organization admin can revoke
+        if (!badgeAward.getAwardedBy().getId().equals(requesterId) && 
+            requester.getRole() != UserRole.ORGANIZATION) {
+            throw new Exception("Only the original awarder or organization admin can revoke this badge");
+        }
+        
+        badgeAwardRepository.delete(badgeAward);
+        
+        // Update user's badge count after revocation
+        updateUserBadgesList(badgeAward.getUser());
+    }
+    
+    // Check if a user can award badges
+    public boolean canAwardBadges(Long userId) {
+        try {
+            User user = userService.findById(userId).orElse(null);
+            if (user == null) return false;
+            
+            // Only RECRUITERS and ORGANIZATIONS can award badges manually
+            return user.getRole() == UserRole.RECRUITER || user.getRole() == UserRole.ORGANIZATION;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    // Get badges awarded by a specific awarder
+    public List<BadgeAward> getBadgesAwardedBy(Long awarderId) throws Exception {
+        User awarder = userService.findById(awarderId)
+            .orElseThrow(() -> new Exception("Awarder not found"));
+        return badgeAwardRepository.findByAwardedByOrderByAwardedAtDesc(awarder);
+    }
+    
+    // Update user's badges list after awarding/revoking
+    private void updateUserBadgesList(User user) {
+        List<BadgeAward> userBadges = badgeAwardRepository.findByUser(user);
+        
+        // Update the badges list in the user entity
+        user.getBadges().clear();
+        for (BadgeAward award : userBadges) {
+            user.getBadges().add(award.getBadge().getName());
+        }
+        
+        userService.updateUser(user);
+    }
+    
+    // Modified awardBadge method to accept awarder parameter
+    public BadgeAward awardBadge(User user, Badge badge, User awardedBy, String reason, Long caseId) {
+        BadgeAward award = new BadgeAward();
+        award.setUser(user);
+        award.setBadge(badge);
+        award.setAwardedBy(awardedBy);
+        award.setReason(reason);
+        
+        // Add case if provided
+        if (caseId != null) {
+            // Note: You might need to inject CrimeCaseRepository or CaseService here
+            // award.setCrimeCase(crimeCase);
+        }
+        
+        BadgeAward savedAward = badgeAwardRepository.save(award);
+        
+        // Update user badges
+        updateUserBadgesList(user);
+        
+        return savedAward;
     }
     
     // Inner class for badge progress

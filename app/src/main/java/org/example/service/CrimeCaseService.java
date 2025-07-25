@@ -42,9 +42,10 @@ public class CrimeCaseService {
             throw new IllegalArgumentException("Only organizations can post cases");
         }
         
-        if (!postedBy.isOrganizationVerified()) {
-            throw new IllegalArgumentException("Organization must be verified to post cases");
-        }
+        // For development: Skip organization verification requirement
+        // if (!postedBy.isOrganizationVerified()) {
+        //     throw new IllegalArgumentException("Organization must be verified to post cases");
+        // }
         
         // Set case properties
         crimeCase.setPostedBy(postedBy);

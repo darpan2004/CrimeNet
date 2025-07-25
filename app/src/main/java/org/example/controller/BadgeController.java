@@ -1,15 +1,14 @@
 package org.example.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.example.entity.Badge;
 import org.example.entity.BadgeAward;
 import org.example.entity.BadgeTier;
 import org.example.entity.BadgeType;
-import org.example.entity.CrimeCase;
 import org.example.entity.User;
 import org.example.service.BadgeService;
-import org.example.service.CrimeCaseService;
 import org.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -34,9 +33,6 @@ public class BadgeController {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private CrimeCaseService crimeCaseService;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -88,22 +84,32 @@ public class BadgeController {
     }
 
     @PostMapping("/award")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZATION')")
-    public ResponseEntity<BadgeAward> awardBadge(@RequestBody BadgeAward badgeAward) {
-        User user = userService.findById(badgeAward.getUser().getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        Badge badge = badgeService.findBadgeById(badgeAward.getBadge().getId())
-                .orElseThrow(() -> new RuntimeException("Badge not found"));
-        
-        CrimeCase crimeCase = null;
-        if (badgeAward.getCrimeCase() != null) {
-            crimeCase = crimeCaseService.findById(badgeAward.getCrimeCase().getId())
-                    .orElse(null);
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZATION') or hasRole('RECRUITER')")
+    public ResponseEntity<?> awardBadge(@RequestBody Map<String, Object> awardRequest) {
+        try {
+            // Extract request data
+            Long userId = Long.valueOf(awardRequest.get("userId").toString());
+            Long badgeId = Long.valueOf(awardRequest.get("badgeId").toString());
+            String reason = (String) awardRequest.get("reason");
+            Long caseId = awardRequest.get("caseId") != null ? 
+                Long.valueOf(awardRequest.get("caseId").toString()) : null;
+            Long awarderId = Long.valueOf(awardRequest.get("awarderId").toString());
+            
+            // Use the new manual awarding method with authorization checks
+            BadgeAward badgeAward = badgeService.awardBadgeManually(awarderId, userId, badgeId, reason, caseId);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Badge awarded successfully",
+                "badgeAward", badgeAward
+            ));
+            
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
         }
-        
-        BadgeAward awardedBadge = badgeService.awardBadge(user, badge, crimeCase);
-        return ResponseEntity.ok(awardedBadge);
     }
 
     @DeleteMapping("/award/{awardId}")
@@ -131,5 +137,18 @@ public class BadgeController {
         User user = userService.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return ResponseEntity.ok(badgeService.findByUser(user));
+    }
+    
+    /**
+     * Check if a user can award badges
+     */
+    @GetMapping("/can-award/{userId}")
+    public ResponseEntity<Map<String, Object>> canAwardBadges(@PathVariable Long userId) {
+        boolean canAward = badgeService.canAwardBadges(userId);
+        
+        return ResponseEntity.ok(Map.of(
+            "canAward", canAward,
+            "message", canAward ? "User can award badges" : "Only recruiters and organizations can award badges"
+        ));
     }
 } 

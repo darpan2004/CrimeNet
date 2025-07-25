@@ -314,6 +314,7 @@ class AuthService {
     required String description,
     File? imageFile,
     File? mediaFile,
+    List<String>? tags,
   }) async {
     String? imageUrl;
     String? mediaUrl;
@@ -335,6 +336,7 @@ class AuthService {
       'description': description,
       if (imageUrl != null) 'imageUrl': imageUrl,
       if (mediaUrl != null) 'mediaUrl': mediaUrl,
+      if (tags != null && tags.isNotEmpty) 'tags': tags,
     };
     await postCase(caseData);
   }

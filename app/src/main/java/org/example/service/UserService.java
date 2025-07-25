@@ -1,5 +1,10 @@
 package org.example.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 import org.example.entity.User;
 import org.example.entity.UserRole;
 import org.example.repository.UserRepository;
@@ -7,11 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 @Service
 @Transactional
@@ -30,7 +30,8 @@ public class UserService {
         
         // Set default values
         user.setEmailVerified(false);
-        user.setOrganizationVerified(false);
+        // For development: Auto-verify organizations, in production this should be manual
+        user.setOrganizationVerified(user.getRole() == UserRole.ORGANIZATION);
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         

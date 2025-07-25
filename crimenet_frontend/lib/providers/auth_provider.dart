@@ -6,13 +6,18 @@ class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
 
   User? _user;
-  bool _isLoading = false;
+  bool _isLoading = true; // Start with loading true
   String? _error;
 
   User? get user => _user;
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isLoggedIn => _user != null;
+
+  // Constructor to check auth status on initialization
+  AuthProvider() {
+    checkAuthStatus();
+  }
 
   Future<void> login(String username, String password) async {
     _setLoading(true);
@@ -52,10 +57,17 @@ class AuthProvider with ChangeNotifier {
 
     try {
       await _authService.logout();
+      // Clear all user state completely
       _user = null;
+      _error = null;
+      // Force a complete state refresh
       notifyListeners();
     } catch (e) {
-      _setError(e.toString());
+      print('Logout error: $e');
+      // Even if logout fails, clear local state completely
+      _user = null;
+      _error = null;
+      notifyListeners();
     } finally {
       _setLoading(false);
     }

@@ -22,6 +22,8 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
+  
+  // Simple, direct screen list without nested navigations
   static List<Widget> _screens = <Widget>[
     CasesScreen(),
     DMInboxScreen(),
